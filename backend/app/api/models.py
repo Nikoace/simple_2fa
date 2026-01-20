@@ -1,0 +1,20 @@
+from typing import Optional
+from sqlmodel import Field, SQLModel
+
+class AccountBase(SQLModel):
+    name: str = Field(index=True)
+    issuer: Optional[str] = None
+    secret: str
+
+class Account(AccountBase, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+
+class AccountCreate(AccountBase):
+    pass
+
+class AccountRead(AccountBase):
+    id: int
+    
+class AccountWithCode(AccountRead):
+    code: str
+    ttl: int

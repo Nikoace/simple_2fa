@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple 2FA</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
+</head>
+<body>
+    <div class="app-container">
+        <header>
+            <h1>Authenticator</h1>
+            <button id="add-btn" class="btn-primary">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="12" y1="5" x2="12" y2="19"></line>
+                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                </svg>
+                Add Account
+            </button>
+        </header>
+        
+        <main id="account-list">
+            <!-- Accounts will be injected here -->
+            <div class="loading">Loading accounts...</div>
+        </main>
+    </div>
+
+    <!-- Modal -->
+    <div id="scan-modal" class="modal hidden">
+        <div class="modal-content">
+            <h2>Add New Account</h2>
+            <p>Scan a QR code from your screen.</p>
+            <div class="modal-actions">
+                <button id="scan-screen-btn" class="btn-large">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+                        <line x1="8" y1="21" x2="16" y2="21"></line>
+                        <line x1="12" y1="17" x2="12" y2="21"></line>
+                    </svg>
+                    Capture Screen
+                </button>
+                <button id="close-modal-btn" class="btn-text">Cancel</button>
+            </div>
+            <div id="scan-status" class="status-msg"></div>
+        </div>
+    </div>
+
+    <script src="/static/js/app.js"></script>
+</body>
+</html>
