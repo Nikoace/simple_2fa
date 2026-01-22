@@ -165,3 +165,9 @@ Thumbs.db
 
 # Project specific
 backend/accounts.db
+
+# Node / Frontend
+node_modules/
+frontend_react/dist/
+frontend_react/node_modules/
+.eslintcache
