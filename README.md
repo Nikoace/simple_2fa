@@ -1,96 +1,105 @@
 # Simple 2FA Authenticator
 
-一个简单的基于 Web 的双因子身份验证 (2FA) 器，支持 TOTP 算法和屏幕 QR 码识别。
+一个现代化、基于 Web 的双因子身份验证 (2FA) 器，支持 TOTP 算法、屏幕 QR 码识别和流畅的动画体验。
 
 ## 🌟 功能特性
 
-- **TOTP 生成**：实时生成并显示基于时间的一次性密码 (TOTP)。
-- **账户管理**：轻松添加、查看和删除 2FA 账户。
-- **QR 码识别**：通过前端技术直接捕获并解析屏幕上的 QR 码，无需手机扫描。
-- **持久化存储**：使用 SQLite 数据库安全存储账户信息。
-- **现代化设计**：简洁、自适应的 Web 界面，带来极致的用户体验。
-- **容器化支持**：内置 Docker 支持，一键部署。
+- **流畅的 TOTP 动画**：使用前端本地计算和 `requestAnimationFrame` 实现平滑的倒计时进度条。
+- **离线生成**：TOTP 代码在本地生成，减少网络请求，保护隐私。
+- **一键复制**：点击代码即可复制到剪贴板。
+- **账户管理**：支持账户的添加、编辑和删除。
+- **QR 码识别**：直接捕获并解析屏幕上的 QR 码，无需手机扫描。
+- **持久化存储**：后端使用 SQLite 安全存储账户密钥。
+- **响应式设计**：基于 React 和 Material UI (MUI)，适配各种屏幕尺寸。
 
 ## 🛠 技术栈
 
-- **后端**：Python, FastAPI, SQLModel (SQLAlchemy)
-- **前端**：Vanilla HTML/JS/CSS, Jinja2
-- **TOTP 库**：PyOTP
+### 前端
+- **框架**：React 18 + TypeScript
+- **构建工具**：Vite + Bun
+- **UI 组件库**：Material UI (MUI)
+- **TOTP 库**：otpauth
+- **QR 码解析**：jsQR
+
+### 后端
+- **框架**：FastAPI (Python)
+- **数据库**：SQLite + SQLModel
 - **包管理**：uv
 - **测试**：Pytest
-- **容器化**：Docker
 
 ## 🚀 快速开始
 
 ### 1. 环境准备
 
-确保您的系统已安装 `Python 3.13` 和 `uv`。
+确保您的系统已安装：
+- **Python 3.13** 和 **uv**
+- **Bun** (用于前端构建)
 
-### 2. 安装依赖
-
-使用 `uv` 创建虚拟环境并安装依赖：
-
-```bash
-uv venv
-source .venv/bin/activate  # Linux/macOS
-# 或者 .venv\Scripts\activate  # Windows
-uv pip install -r requirements.txt
-```
-
-### 3. 运行项目
-
-您可以直接运行脚本：
+### 2. 后端设置
 
 ```bash
-./run.sh
-```
-
-或者手动启动：
-
-```bash
+# 进入后端目录
 cd backend
+
+# 创建虚拟环境并安装依赖
+uv venv
+source .venv/bin/activate
+uv pip install -r requirements.txt
+
+# 启动后端服务
 uvicorn app.main:app --reload
 ```
 
-访问 `http://localhost:8000` 即可开始使用。
+后端服务将在 `http://localhost:8000` 启动。
 
-## 🐳 使用 Docker 运行
-
-1. **构建镜像**：
+### 3. 前端设置
 
 ```bash
-docker build -t simple-2fa .
+# 进入前端目录
+cd frontend_react
+
+# 安装依赖
+bun install
+
+# 启动开发服务器
+bun run dev
 ```
 
-2. **运行容器**：
+前端应用将在 `http://localhost:5173` 启动（具体端口见终端输出）。
+
+### 4. 构建生产版本
 
 ```bash
-docker run -p 8000:8000 simple-2fa
+cd frontend_react
+bun run build
 ```
 
-## 🧪 运行测试
+构建产物将位于 `frontend_react/dist` 目录。
 
-使用 `pytest` 进行自动化测试：
+## 🐳 Docker 部署
 
-```bash
-cd backend
-pytest
-```
+coming soon...
 
 ## 📁 项目结构
 
 ```text
 simple_2fa/
-├── backend/            # 后端代码
-│   ├── app/            # FastAPI 应用核心
-│   │   ├── api/        # 路由定义
-│   │   ├── main.py     # 入口文件
-│   │   └── database.py # 数据库配置
-│   └── tests/          # 测试用例
-├── frontend/           # 前端资源
-│   ├── static/         # CSS, JS, 图片
-│   └── templates/      # Jinja2 模板 (HTML)
-├── Dockerfile          # 容器构建文件
-├── requirements.txt    # 依赖清单
-└── run.sh              # 启动脚本
+├── backend/            # Python FastAPI 后端
+│   ├── app/            # 应用核心代码
+│   │   ├── api/        # API 路由
+│   │   ├── core/       # 核心逻辑 (TOTP 等)
+│   │   └── main.py     # 入口文件
+│   └── tests/          # Pytest 测试
+├── frontend_react/     # React TypeScript 前端
+│   ├── src/            # 源代码
+│   │   ├── components/ # UI 组件
+│   │   ├── types.ts    # 类型定义
+│   │   └── App.tsx     # 主应用组件
+│   ├── vite.config.ts  # Vite 配置
+│   └── tsconfig.json   # TypeScript 配置
+└── README.md           # 项目文档
 ```
+
+## 📝 许可证
+
+MIT License
