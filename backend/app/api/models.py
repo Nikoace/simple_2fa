@@ -12,6 +12,11 @@ class Account(AccountBase, table=True):
 class AccountCreate(AccountBase):
     pass
 
+class AccountUpdate(SQLModel):
+    name: Optional[str] = None
+    issuer: Optional[str] = None
+    secret: Optional[str] = None
+
 class AccountRead(AccountBase):
     id: int
     
