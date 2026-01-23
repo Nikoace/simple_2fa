@@ -1,8 +1,14 @@
-import React from 'react';
+import { Account } from '../types';
 import { Box, Typography } from '@mui/material';
 import AccountCard from './AccountCard';
 
-export default function AccountList({ accounts, onDelete, onEdit }) {
+interface AccountListProps {
+    accounts: Account[];
+    onDelete: (account: Account) => void;
+    onEdit: (account: Account) => void;
+}
+
+export default function AccountList({ accounts, onDelete, onEdit }: AccountListProps) {
     if (!accounts || accounts.length === 0) {
         return (
             <Box textAlign="center" py={5}>

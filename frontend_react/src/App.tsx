@@ -3,12 +3,13 @@ import { Container, Typography, Box, Button, AppBar, Toolbar, CssBaseline } from
 import { Add } from '@mui/icons-material'
 import AccountList from './components/AccountList'
 import AddAccountModal from './components/AddAccountModal'
+import { Account } from './types'
 
 
 function App() {
-  const [accounts, setAccounts] = useState([])
+  const [accounts, setAccounts] = useState<Account[]>([])
   const [modalOpen, setModalOpen] = useState(false)
-  const [editingAccount, setEditingAccount] = useState(null)
+  const [editingAccount, setEditingAccount] = useState<Account | null>(null)
 
   const fetchAccounts = async () => {
     try {
@@ -22,7 +23,7 @@ function App() {
     }
   }
 
-  const handleDelete = async (account) => {
+  const handleDelete = async (account: Account) => {
     if (!confirm(`Are you sure you want to delete ${account.name}?`)) return
 
     try {
@@ -37,7 +38,7 @@ function App() {
     }
   }
 
-  const handleEdit = (account) => {
+  const handleEdit = (account: Account) => {
     setEditingAccount(account)
     setModalOpen(true)
   }
@@ -49,8 +50,6 @@ function App() {
 
   useEffect(() => {
     fetchAccounts()
-    const interval = setInterval(fetchAccounts, 1000) // Poll every second for smooth updates
-    return () => clearInterval(interval)
   }, [])
 
   return (

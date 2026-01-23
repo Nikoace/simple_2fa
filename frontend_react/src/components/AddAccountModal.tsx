@@ -1,10 +1,24 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Dialog, DialogTitle, DialogContent, Tabs, Tab, Box, TextField, Button, DialogActions, Typography, Alert, CircularProgress } from '@mui/material';
 import jsQR from 'jsqr';
+import { Account } from '../types';
 
-export default function AddAccountModal({ open, onClose, onAccountAdded, initialData }) {
+interface AddAccountModalProps {
+    open: boolean;
+    onClose: () => void;
+    onAccountAdded: () => void;
+    initialData: Account | null;
+}
+
+interface AccountForm {
+    name: string;
+    issuer: string;
+    secret: string;
+}
+
+export default function AddAccountModal({ open, onClose, onAccountAdded, initialData }: AddAccountModalProps) {
     const [tab, setTab] = useState(0); // 0 = Scan, 1 = Manual
-    const [form, setForm] = useState({ name: '', issuer: '', secret: '' });
+    const [form, setForm] = useState<AccountForm>({ name: '', issuer: '', secret: '' });
     const [error, setError] = useState('');
     const [status, setStatus] = useState('');
     const [scanning, setScanning] = useState(false);
@@ -25,7 +39,7 @@ export default function AddAccountModal({ open, onClose, onAccountAdded, initial
         }
     }, [initialData, open]);
 
-    const handleTabChange = (event, newValue) => {
+    const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
         setTab(newValue);
         setError('');
         setStatus('');
@@ -38,7 +52,7 @@ export default function AddAccountModal({ open, onClose, onAccountAdded, initial
 
         try {
             const stream = await navigator.mediaDevices.getDisplayMedia({
-                video: { cursor: "never" }
+                video: { cursor: "never" } as any
             });
 
             const track = stream.getVideoTracks()[0];
@@ -46,19 +60,24 @@ export default function AddAccountModal({ open, onClose, onAccountAdded, initial
             // Wait for stream to be active
             await new Promise(r => setTimeout(r, 500));
 
-            let foundCode = null;
+            let foundCode: string | null = null;
 
             const video = document.createElement('video');
             video.srcObject = stream;
             video.play();
 
             // Wait for video to have dimensions
-            await new Promise(resolve => {
+            await new Promise<void>(resolve => {
                 video.onloadedmetadata = () => resolve();
             });
 
             const canvas = document.createElement('canvas');
             const ctx = canvas.getContext('2d');
+
+            if (!ctx) {
+                setError('Could not get canvas context');
+                return;
+            }
 
             for (let i = 0; i < 20; i++) { // Try for a few seconds
                 if (foundCode) break;
@@ -88,16 +107,16 @@ export default function AddAccountModal({ open, onClose, onAccountAdded, initial
                 setError('No QR code found in the selection.');
             }
 
-        } catch (err) {
+        } catch (err: unknown) {
             console.error(err);
-            setError('Capture cancelled or failed: ' + err.message);
+            setError('Capture cancelled or failed: ' + (err instanceof Error ? err.message : String(err)));
         } finally {
             setScanning(false);
             setStatus('');
         }
     };
 
-    const handleQrFound = (data) => {
+    const handleQrFound = (data: string) => {
         try {
             if (!data.startsWith('otpauth://')) {
                 throw new Error('Not a valid OTP URL');
@@ -115,8 +134,8 @@ export default function AddAccountModal({ open, onClose, onAccountAdded, initial
             setForm({ name, issuer, secret });
             setTab(1); // Switch to manual tab for editing
             setStatus('QR Code scanned! You can edit details below.');
-        } catch (e) {
-            setError(e.message);
+        } catch (e: unknown) {
+            setError(e instanceof Error ? e.message : String(e));
         }
     };
 
