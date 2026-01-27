@@ -1,3 +1,5 @@
+import logging
+import re
 from typing import List
 from fastapi import APIRouter, Depends, HTTPException
 from sqlmodel import Session, select
@@ -6,6 +8,7 @@ from app.database import get_session
 from app.api.models import Account, AccountCreate, AccountRead, AccountWithCode, AccountUpdate
 from app.core.totp import get_totp_now, get_ttl
 
+logger = logging.getLogger("uvicorn")
 router = APIRouter()
 
 @router.get("/accounts", response_model=List[AccountWithCode])
@@ -21,13 +24,19 @@ def read_accounts(session: Session = Depends(get_session)):
                 code=code, 
                 ttl=ttl
             ))
-        except Exception:
-            # Handle invalid secrets gracefully
+        except Exception as e:
+            # Handle invalid secrets gracefully but log the error
+            logger.error(f"Error generating TOTP for account {account.id} ({account.name}): {e}")
+            # Optionally we could return an error state, but for now skipping is safer than crashing
             continue
     return results
 
 @router.post("/accounts", response_model=AccountRead)
 def create_account(account: AccountCreate, session: Session = Depends(get_session)):
+    # Validate Base32 format
+    if not re.fullmatch(r'[A-Z2-7=]+', account.secret.upper()):
+        raise HTTPException(status_code=400, detail="Invalid secret: must be Base32 (A-Z, 2-7)")
+
     db_account = Account.model_validate(account)
     session.add(db_account)
     session.commit()

@@ -174,10 +174,11 @@ export default function AddAccountModal({ open, onClose, onAccountAdded, initial
                 onAccountAdded();
                 handleClose();
             } else {
-                setError('Failed to save account.');
+                const errData = await res.json().catch(() => ({}));
+                setError(errData.detail || 'Failed to save account.');
             }
         } catch {
-            setError('Network error.');
+            setError('Network error: Could not reach server.');
         }
     };
 
