@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Container, Typography, Box, Button, AppBar, Toolbar, CssBaseline } from '@mui/material'
 import { Add } from '@mui/icons-material'
 import AccountList from './components/AccountList'
@@ -7,11 +7,12 @@ import { Account } from './types'
 
 
 function App() {
+
   const [accounts, setAccounts] = useState<Account[]>([])
   const [modalOpen, setModalOpen] = useState(false)
   const [editingAccount, setEditingAccount] = useState<Account | null>(null)
 
-  const fetchAccounts = async () => {
+  const fetchAccounts = useCallback(async () => {
     try {
       const res = await fetch('/api/accounts')
       if (res.ok) {
@@ -21,7 +22,7 @@ function App() {
     } catch (error) {
       console.error('Failed to fetch accounts', error)
     }
-  }
+  }, [])
 
   const handleDelete = async (account: Account) => {
     if (!confirm(`Are you sure you want to delete ${account.name}?`)) return
@@ -33,7 +34,7 @@ function App() {
       } else {
         alert('Failed to delete')
       }
-    } catch (e) {
+    } catch {
       alert('Error deleting account')
     }
   }
@@ -49,8 +50,13 @@ function App() {
   }
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchAccounts()
-  }, [])
+
+    // Poll every 5 seconds to keep codes fresh
+    const interval = setInterval(fetchAccounts, 5000)
+    return () => clearInterval(interval)
+  }, [fetchAccounts])
 
   return (
     <>

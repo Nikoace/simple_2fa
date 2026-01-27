@@ -17,7 +17,7 @@ def read_accounts(session: Session = Depends(get_session)):
             code = get_totp_now(account.secret)
             ttl = get_ttl(account.secret)
             results.append(AccountWithCode(
-                **account.model_dump(), 
+                **account.model_dump(exclude={"secret"}), 
                 code=code, 
                 ttl=ttl
             ))

@@ -4,13 +4,13 @@ from sqlmodel import Field, SQLModel
 class AccountBase(SQLModel):
     name: str = Field(index=True)
     issuer: Optional[str] = None
-    secret: str
 
 class Account(AccountBase, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
+    secret: str
 
 class AccountCreate(AccountBase):
-    pass
+    secret: str
 
 class AccountUpdate(SQLModel):
     name: Optional[str] = None

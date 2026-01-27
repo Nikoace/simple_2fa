@@ -1,4 +1,5 @@
 import pyotp
+import time
 
 def generate_secret() -> str:
     return pyotp.random_base32()
@@ -14,5 +15,3 @@ def verify_code(secret: str, code: str) -> bool:
 def get_ttl(secret: str) -> int:
     totp = pyotp.TOTP(secret)
     return totp.interval - (int(time.time()) % totp.interval)
-
-import time

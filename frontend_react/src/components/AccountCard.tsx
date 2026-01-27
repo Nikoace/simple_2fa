@@ -1,8 +1,7 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState } from 'react';
 import { Account } from '../types';
 import { Card, CardContent, Typography, LinearProgress, IconButton, Box, Tooltip } from '@mui/material';
 import { ContentCopy, Delete, Edit } from '@mui/icons-material';
-import * as OTPAuth from 'otpauth';
 
 interface AccountCardProps {
     account: Account;
@@ -11,46 +10,35 @@ interface AccountCardProps {
 }
 
 export default function AccountCard({ account, onDelete, onEdit }: AccountCardProps) {
-    const { name, issuer, secret } = account;
-    const [code, setCode] = useState('--- ---');
+    const { name, issuer, code, ttl } = account;
+    const [timeLeft, setTimeLeft] = useState(ttl);
     const [progress, setProgress] = useState(0);
     const [isDanger, setIsDanger] = useState(false);
 
-    // Create TOTP object
-    // We memoize it or just recreate it since secret doesn't change often
-    const totp = new OTPAuth.TOTP({
-        issuer: issuer || 'Unknown',
-        label: name,
-        algorithm: 'SHA1',
-        digits: 6,
-        period: 30,
-        secret: OTPAuth.Secret.fromBase32(secret)
-    });
+    useEffect(() => {
+        setTimeLeft(ttl);
+    }, [ttl]);
 
     useEffect(() => {
-        let frameId: number;
+        const timer = setInterval(() => {
+            setTimeLeft((prev) => {
+                const newTime = prev > 0 ? prev - 1 : 0;
+                return newTime;
+            });
+        }, 1000);
 
-        const update = () => {
-            const now = Date.now() / 1000;
-            const period = 30;
-            const remaining = period - (now % period);
+        return () => clearInterval(timer);
+    }, []);
 
-            // Update progress
-            const newProgress = (remaining / period) * 100;
-            setProgress(newProgress);
-            setIsDanger(remaining < 5);
-
-            // Update code if needed (or just every frame to be safe/simple)
-            const newCode = totp.generate();
-            const formatted = newCode.match(/.{1,3}/g)?.join(' ') || '--- ---';
-            setCode(formatted);
-
-            frameId = requestAnimationFrame(update);
-        };
-
-        update();
-        return () => cancelAnimationFrame(frameId);
-    }, [secret]); // Re-run if secret changes
+    useEffect(() => {
+        // ttl is usually 30s.
+        // progress = (timeLeft / 30) * 100 ?
+        // Backend returns ttl. period is 30.
+        const period = 30;
+        const newProgress = (timeLeft / period) * 100;
+        setProgress(newProgress);
+        setIsDanger(timeLeft < 5);
+    }, [timeLeft]);
 
     const handleCopy = () => {
         const rawCode = code.replace(/ /g, '');

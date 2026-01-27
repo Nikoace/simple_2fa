@@ -28,7 +28,7 @@ export default function AddAccountModal({ open, onClose, onAccountAdded, initial
             setForm({
                 name: initialData.name || '',
                 issuer: initialData.issuer || '',
-                secret: initialData.secret || ''
+                secret: '' // Secret is not returned by API for security
             });
             setTab(1); // Force Manual tab for editing
             setStatus('');
@@ -52,6 +52,7 @@ export default function AddAccountModal({ open, onClose, onAccountAdded, initial
 
         try {
             const stream = await navigator.mediaDevices.getDisplayMedia({
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 video: { cursor: "never" } as any
             });
 
@@ -127,7 +128,7 @@ export default function AddAccountModal({ open, onClose, onAccountAdded, initial
             const issuer = params.get('issuer') || 'Unknown';
             const pathname = decodeURIComponent(url.pathname);
             // Clean up name
-            let name = pathname.split(':').pop() || pathname.replace('/', '');
+            const name = pathname.split(':').pop() || pathname.replace('/', '');
 
             if (!secret) throw new Error('No secret found');
 
@@ -140,7 +141,8 @@ export default function AddAccountModal({ open, onClose, onAccountAdded, initial
     };
 
     const handleSubmit = async () => {
-        if (!form.secret || !form.name) {
+        // Validation: Secret is required for new accounts, but optional for updates (if unchanged)
+        if (!form.name || (!initialData && !form.secret)) {
             setError('Name and Secret are required.');
             return;
         }
@@ -152,10 +154,20 @@ export default function AddAccountModal({ open, onClose, onAccountAdded, initial
 
             const method = initialData?.id ? 'PUT' : 'POST';
 
+            // Construct payload: exclude secret if empty during update
+            const payload: Partial<AccountForm> = {
+                name: form.name,
+                issuer: form.issuer
+            };
+
+            if (form.secret) {
+                payload.secret = form.secret;
+            }
+
             const res = await fetch(url, {
                 method: method,
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(form)
+                body: JSON.stringify(payload)
             });
 
             if (res.ok) {
@@ -164,7 +176,7 @@ export default function AddAccountModal({ open, onClose, onAccountAdded, initial
             } else {
                 setError('Failed to save account.');
             }
-        } catch (e) {
+        } catch {
             setError('Network error.');
         }
     };
