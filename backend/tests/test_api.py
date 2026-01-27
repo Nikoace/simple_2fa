@@ -24,3 +24,24 @@ def test_list_accounts(client: TestClient):
     assert len(data) >= 1
     assert "code" in data[0]
     assert "ttl" in data[0]
+
+
+def test_add_account_invalid_secret(client: TestClient):
+    """Test that invalid secrets are rejected with 400 error."""
+    response = client.post(
+        "/api/accounts",
+        json={"name": "Test", "issuer": "Test", "secret": "invalid-secret!"}
+    )
+    assert response.status_code == 400
+    assert "Invalid secret" in response.json()["detail"]
+
+
+def test_add_account_invalid_base32_chars(client: TestClient):
+    """Test that secrets with invalid Base32 characters are rejected."""
+    response = client.post(
+        "/api/accounts",
+        json={"name": "Test", "issuer": "Test", "secret": "hellotest"}
+    )
+    assert response.status_code == 400
+    assert "Invalid secret" in response.json()["detail"]
+
