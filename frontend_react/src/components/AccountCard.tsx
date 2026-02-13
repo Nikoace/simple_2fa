@@ -1,7 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Account } from '../types';
 import { Card, CardContent, Typography, LinearProgress, IconButton, Box, Tooltip } from '@mui/material';
 import { ContentCopy, Delete, Edit } from '@mui/icons-material';
+import { getTotpState } from '../utils/totp';
 
 interface AccountCardProps {
     account: Account;
@@ -10,35 +11,24 @@ interface AccountCardProps {
 }
 
 export default function AccountCard({ account, onDelete, onEdit }: AccountCardProps) {
-    const { name, issuer, code, ttl } = account;
-    const [timeLeft, setTimeLeft] = useState(ttl);
-    const [progress, setProgress] = useState(0);
-    const [isDanger, setIsDanger] = useState(false);
-
-    useEffect(() => {
-        setTimeLeft(ttl);
-    }, [ttl]);
+    const { name, issuer, secret } = account;
+    const [now, setNow] = useState(Date.now());
 
     useEffect(() => {
         const timer = setInterval(() => {
-            setTimeLeft((prev) => {
-                const newTime = prev > 0 ? prev - 1 : 0;
-                return newTime;
-            });
+            setNow(Date.now());
         }, 1000);
 
         return () => clearInterval(timer);
     }, []);
 
-    useEffect(() => {
-        // ttl is usually 30s.
-        // progress = (timeLeft / 30) * 100 ?
-        // Backend returns ttl. period is 30.
-        const period = 30;
-        const newProgress = (timeLeft / period) * 100;
-        setProgress(newProgress);
-        setIsDanger(timeLeft < 5);
-    }, [timeLeft]);
+    const totp = useMemo(() => getTotpState(secret, now), [secret, now]);
+
+    const ttl = totp?.ttl ?? 0;
+    const period = totp?.period ?? 30;
+    const progress = (ttl / period) * 100;
+    const isDanger = ttl < 5;
+    const code = totp?.code ?? '------';
 
     const handleCopy = () => {
         const rawCode = code.replace(/ /g, '');

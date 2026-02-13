@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect } from 'react'
 import {
   Container, Typography, Box, Button, AppBar, Toolbar, CssBaseline,
   Dialog, DialogTitle, DialogContent, DialogActions, DialogContentText,
@@ -9,9 +9,7 @@ import AccountList from './components/AccountList'
 import AddAccountModal from './components/AddAccountModal'
 import { Account } from './types'
 
-
 function App() {
-
   const [accounts, setAccounts] = useState<Account[]>([])
   const [modalOpen, setModalOpen] = useState(false)
   const [editingAccount, setEditingAccount] = useState<Account | null>(null)
@@ -31,7 +29,7 @@ function App() {
     setSnackbar({ ...snackbar, open: false })
   }
 
-  const fetchAccounts = useCallback(async () => {
+  const fetchAccounts = async () => {
     try {
       const res = await fetch('/api/accounts')
       if (res.ok) {
@@ -47,7 +45,7 @@ function App() {
       console.error('Network error fetching accounts', error)
       showSnackbar('Network error fetching accounts', 'error')
     }
-  }, [])
+  }
 
   const confirmDelete = (account: Account) => {
     setAccountToDelete(account)
@@ -60,7 +58,7 @@ function App() {
     try {
       const res = await fetch(`/api/accounts/${accountToDelete.id}`, { method: 'DELETE' })
       if (res.ok) {
-        fetchAccounts()
+        setAccounts((prev) => prev.filter((account) => account.id !== accountToDelete.id))
         showSnackbar('Account deleted successfully')
       } else {
         const errData = await res.json().catch(() => ({}))
@@ -96,13 +94,8 @@ function App() {
   }
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchAccounts()
-
-    // Poll every 5 seconds to keep codes fresh
-    const interval = setInterval(fetchAccounts, 5000)
-    return () => clearInterval(interval)
-  }, [fetchAccounts])
+  }, [])
 
   return (
     <>

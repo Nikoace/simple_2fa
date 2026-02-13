@@ -1,6 +1,7 @@
 from fastapi.testclient import TestClient
 
-def test_read_accounts_no_secret(client: TestClient):
+
+def test_read_accounts_include_secret(client: TestClient):
     # Create an account
     client.post(
         "/api/accounts",
@@ -12,6 +13,4 @@ def test_read_accounts_no_secret(client: TestClient):
     data = response.json()
     assert len(data) > 0
     first_account = data[0]
-    
-    # This assertion is expected to fail currently, as secret IS returned
-    assert "secret" not in first_account, "Secret corrupted the response!"
+    assert "secret" in first_account

@@ -19,7 +19,4 @@ class AccountUpdate(SQLModel):
 
 class AccountRead(AccountBase):
     id: int
-    
-class AccountWithCode(AccountRead):
-    code: str
-    ttl: int
+    secret: str

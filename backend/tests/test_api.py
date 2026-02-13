@@ -22,8 +22,7 @@ def test_list_accounts(client: TestClient):
     data = response.json()
     assert isinstance(data, list)
     assert len(data) >= 1
-    assert "code" in data[0]
-    assert "ttl" in data[0]
+    assert "secret" in data[0]
 
 
 def test_add_account_invalid_secret(client: TestClient):

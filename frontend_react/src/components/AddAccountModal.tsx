@@ -28,7 +28,7 @@ export default function AddAccountModal({ open, onClose, onAccountAdded, initial
             setForm({
                 name: initialData.name || '',
                 issuer: initialData.issuer || '',
-                secret: '' // Secret is not returned by API for security
+                secret: initialData.secret || ''
             });
             setTab(1); // Force Manual tab for editing
             setStatus('');
