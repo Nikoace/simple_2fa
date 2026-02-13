@@ -8,6 +8,7 @@ import { Add } from '@mui/icons-material'
 import AccountList from './components/AccountList'
 import AddAccountModal from './components/AddAccountModal'
 import { Account } from './types'
+import { listAccounts, deleteAccount, getErrorMessage } from './services/accountStore'
 
 
 function App() {
@@ -33,19 +34,11 @@ function App() {
 
   const fetchAccounts = useCallback(async () => {
     try {
-      const res = await fetch('/api/accounts')
-      if (res.ok) {
-        const data = await res.json()
-        setAccounts(data)
-      } else {
-        const errData = await res.json().catch(() => ({}))
-        const msg = errData.detail || 'Failed to fetch accounts'
-        console.error('Failed to fetch accounts', msg)
-        showSnackbar(msg, 'error')
-      }
+      const data = await listAccounts()
+      setAccounts(data)
     } catch (error) {
-      console.error('Network error fetching accounts', error)
-      showSnackbar('Network error fetching accounts', 'error')
+      console.error('Failed to fetch accounts', error)
+      showSnackbar(getErrorMessage(error, 'Failed to fetch accounts'), 'error')
     }
   }, [])
 
@@ -58,17 +51,11 @@ function App() {
     if (!accountToDelete) return
 
     try {
-      const res = await fetch(`/api/accounts/${accountToDelete.id}`, { method: 'DELETE' })
-      if (res.ok) {
-        fetchAccounts()
-        showSnackbar('Account deleted successfully')
-      } else {
-        const errData = await res.json().catch(() => ({}))
-        const msg = errData.detail || 'Failed to delete account'
-        showSnackbar(msg, 'error')
-      }
-    } catch {
-      showSnackbar('Error deleting account', 'error')
+      await deleteAccount(accountToDelete.id)
+      await fetchAccounts()
+      showSnackbar('Account deleted successfully')
+    } catch (error) {
+      showSnackbar(getErrorMessage(error, 'Failed to delete account'), 'error')
     } finally {
       setDeleteDialogOpen(false)
       setAccountToDelete(null)
