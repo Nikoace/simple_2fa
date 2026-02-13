@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react'
 import {
   Container, Typography, Box, Button, AppBar, Toolbar, CssBaseline,
   Dialog, DialogTitle, DialogContent, DialogActions, DialogContentText,
-  Snackbar, Alert
+  Snackbar, Alert, AlertTitle
 } from '@mui/material'
 import { Add } from '@mui/icons-material'
 import AccountList from './components/AccountList'
@@ -15,6 +15,8 @@ function App() {
   const [accounts, setAccounts] = useState<Account[]>([])
   const [modalOpen, setModalOpen] = useState(false)
   const [editingAccount, setEditingAccount] = useState<Account | null>(null)
+
+  const [showStorageNotice, setShowStorageNotice] = useState(() => localStorage.getItem('storage-notice-ack') !== '1')
 
   // UX State
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
@@ -29,6 +31,11 @@ function App() {
 
   const handleSnackbarClose = () => {
     setSnackbar({ ...snackbar, open: false })
+  }
+
+  const acknowledgeStorageNotice = () => {
+    localStorage.setItem('storage-notice-ack', '1')
+    setShowStorageNotice(false)
   }
 
   const fetchAccounts = useCallback(async () => {
@@ -127,6 +134,12 @@ function App() {
         </AppBar>
 
         <Container maxWidth="sm" sx={{ mt: 4 }}>
+          {showStorageNotice && (
+            <Alert severity="warning" sx={{ mb: 2 }} onClose={acknowledgeStorageNotice}>
+              <AlertTitle>安全提示</AlertTitle>
+              2FA secret 将存储在当前浏览器（localStorage / IndexedDB）。清除浏览器数据、切换设备或隐私模式会导致账户丢失，请及时备份。
+            </Alert>
+          )}
           <AccountList accounts={accounts} onDelete={confirmDelete} onEdit={handleEdit} />
         </Container>
 

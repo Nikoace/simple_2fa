@@ -205,6 +205,10 @@ export default function AddAccountModal({ open, onClose, onAccountAdded, initial
 
                 {tab === 0 && !initialData && (
                     <Box textAlign="center" py={4}>
+                        <Alert severity="warning" sx={{ mb: 2, textAlign: 'left' }}>
+                            安全提示：账户 secret 会保存在本机浏览器（localStorage / IndexedDB）。
+                            如果清除浏览器数据或更换设备，账户将无法恢复。
+                        </Alert>
                         <Typography gutterBottom>
                             Scan a QR code from your screen.
                         </Typography>
