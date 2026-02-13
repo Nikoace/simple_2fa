@@ -16,25 +16,54 @@ interface AccountForm {
     secret: string;
 }
 
+const ACCOUNT_STORAGE_KEY = 'simple2fa.accounts.full';
+
+interface StoredAccount extends AccountForm {
+    id: number;
+}
+
+const normalizeSecret = (secret: string) => secret.replace(/\s+/g, '').toUpperCase();
+
+const isValidBase32Secret = (secret: string) => /^[A-Z2-7]+=*$/.test(secret);
+
+const readStoredAccounts = (): Record<number, StoredAccount> => {
+    try {
+        const raw = localStorage.getItem(ACCOUNT_STORAGE_KEY);
+        if (!raw) return {};
+        return JSON.parse(raw) as Record<number, StoredAccount>;
+    } catch {
+        return {};
+    }
+};
+
+const writeStoredAccounts = (accounts: Record<number, StoredAccount>) => {
+    localStorage.setItem(ACCOUNT_STORAGE_KEY, JSON.stringify(accounts));
+};
+
 export default function AddAccountModal({ open, onClose, onAccountAdded, initialData }: AddAccountModalProps) {
     const [tab, setTab] = useState(0); // 0 = Scan, 1 = Manual
     const [form, setForm] = useState<AccountForm>({ name: '', issuer: '', secret: '' });
     const [error, setError] = useState('');
     const [status, setStatus] = useState('');
     const [scanning, setScanning] = useState(false);
+    const [originalSecret, setOriginalSecret] = useState('');
 
     useEffect(() => {
         if (initialData) {
+            const storedAccount = readStoredAccounts()[initialData.id];
+            const storedSecret = storedAccount?.secret ? normalizeSecret(storedAccount.secret) : '';
             setForm({
-                name: initialData.name || '',
-                issuer: initialData.issuer || '',
-                secret: '' // Secret is not returned by API for security
+                name: storedAccount?.name || initialData.name || '',
+                issuer: storedAccount?.issuer || initialData.issuer || '',
+                secret: storedSecret
             });
+            setOriginalSecret(storedSecret);
             setTab(1); // Force Manual tab for editing
             setStatus('');
             setError('');
         } else {
             setForm({ name: '', issuer: '', secret: '' });
+            setOriginalSecret('');
             setTab(0); // Default to scan
         }
     }, [initialData, open]);
@@ -132,7 +161,7 @@ export default function AddAccountModal({ open, onClose, onAccountAdded, initial
 
             if (!secret) throw new Error('No secret found');
 
-            setForm({ name, issuer, secret });
+            setForm({ name, issuer, secret: normalizeSecret(secret) });
             setTab(1); // Switch to manual tab for editing
             setStatus('QR Code scanned! You can edit details below.');
         } catch (e: unknown) {
@@ -141,9 +170,23 @@ export default function AddAccountModal({ open, onClose, onAccountAdded, initial
     };
 
     const handleSubmit = async () => {
-        // Validation: Secret is required for new accounts, but optional for updates (if unchanged)
-        if (!form.name || (!initialData && !form.secret)) {
-            setError('Name and Secret are required.');
+        const normalizedSecret = normalizeSecret(form.secret);
+        const normalizedOriginalSecret = normalizeSecret(originalSecret);
+        const isEditing = Boolean(initialData?.id);
+        const isSecretUpdated = normalizedSecret !== normalizedOriginalSecret;
+
+        if (!form.name.trim()) {
+            setError('Name is required.');
+            return;
+        }
+
+        if (!isEditing && !normalizedSecret) {
+            setError('Secret is required.');
+            return;
+        }
+
+        if ((!isEditing || isSecretUpdated) && normalizedSecret && !isValidBase32Secret(normalizedSecret)) {
+            setError('Secret must be a valid Base32 string (A-Z, 2-7, optional = padding).');
             return;
         }
 
@@ -156,12 +199,12 @@ export default function AddAccountModal({ open, onClose, onAccountAdded, initial
 
             // Construct payload: exclude secret if empty during update
             const payload: Partial<AccountForm> = {
-                name: form.name,
-                issuer: form.issuer
+                name: form.name.trim(),
+                issuer: form.issuer.trim()
             };
 
-            if (form.secret) {
-                payload.secret = form.secret;
+            if (!isEditing || isSecretUpdated) {
+                payload.secret = normalizedSecret;
             }
 
             const res = await fetch(url, {
@@ -171,6 +214,18 @@ export default function AddAccountModal({ open, onClose, onAccountAdded, initial
             });
 
             if (res.ok) {
+                const savedAccount = await res.json();
+                const storedAccounts = readStoredAccounts();
+                const accountId = savedAccount?.id ?? initialData?.id;
+                if (accountId) {
+                    storedAccounts[accountId] = {
+                        id: accountId,
+                        name: payload.name || form.name,
+                        issuer: payload.issuer || form.issuer,
+                        secret: isSecretUpdated || !isEditing ? normalizedSecret : normalizedOriginalSecret
+                    };
+                    writeStoredAccounts(storedAccounts);
+                }
                 onAccountAdded();
                 handleClose();
             } else {
@@ -241,8 +296,10 @@ export default function AddAccountModal({ open, onClose, onAccountAdded, initial
                             fullWidth
                             label="Secret Key"
                             value={form.secret}
-                            onChange={(e) => setForm({ ...form, secret: e.target.value })}
-                            helperText="Base32 string"
+                            onChange={(e) => setForm({ ...form, secret: normalizeSecret(e.target.value) })}
+                            helperText={initialData
+                                ? '不修改则保留原密钥；修改后将覆盖为新密钥（仅允许 Base32）'
+                                : 'Base32 string (A-Z, 2-7, optional = padding)'}
                         />
                     </Box>
                 )}
