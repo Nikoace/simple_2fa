@@ -8,6 +8,7 @@ import { Add } from '@mui/icons-material'
 import AccountList from './components/AccountList'
 import AddAccountModal from './components/AddAccountModal'
 import { Account } from './types'
+import { getAccounts, deleteAccount } from './tauriApi'
 
 
 function App() {
@@ -33,19 +34,11 @@ function App() {
 
   const fetchAccounts = useCallback(async () => {
     try {
-      const res = await fetch('/api/accounts')
-      if (res.ok) {
-        const data = await res.json()
-        setAccounts(data)
-      } else {
-        const errData = await res.json().catch(() => ({}))
-        const msg = errData.detail || 'Failed to fetch accounts'
-        console.error('Failed to fetch accounts', msg)
-        showSnackbar(msg, 'error')
-      }
+      const data = await getAccounts()
+      setAccounts(data)
     } catch (error) {
-      console.error('Network error fetching accounts', error)
-      showSnackbar('Network error fetching accounts', 'error')
+      console.error('Failed to fetch accounts', error)
+      showSnackbar(String(error), 'error')
     }
   }, [])
 
@@ -58,17 +51,11 @@ function App() {
     if (!accountToDelete) return
 
     try {
-      const res = await fetch(`/api/accounts/${accountToDelete.id}`, { method: 'DELETE' })
-      if (res.ok) {
-        fetchAccounts()
-        showSnackbar('Account deleted successfully')
-      } else {
-        const errData = await res.json().catch(() => ({}))
-        const msg = errData.detail || 'Failed to delete account'
-        showSnackbar(msg, 'error')
-      }
-    } catch {
-      showSnackbar('Error deleting account', 'error')
+      await deleteAccount(accountToDelete.id)
+      fetchAccounts()
+      showSnackbar('Account deleted successfully')
+    } catch (error) {
+      showSnackbar(String(error), 'error')
     } finally {
       setDeleteDialogOpen(false)
       setAccountToDelete(null)
@@ -96,7 +83,6 @@ function App() {
   }
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchAccounts()
 
     // Poll every 5 seconds to keep codes fresh
@@ -127,7 +113,7 @@ function App() {
         </AppBar>
 
         <Container maxWidth="sm" sx={{ mt: 4 }}>
-          <AccountList accounts={accounts} onDelete={confirmDelete} onEdit={handleEdit} />
+          <AccountList accounts={accounts} onDelete={confirmDelete} onEdit={handleEdit} onRefresh={fetchAccounts} />
         </Container>
 
         <AddAccountModal

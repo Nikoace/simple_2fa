@@ -6,9 +6,10 @@ interface AccountListProps {
     accounts: Account[];
     onDelete: (account: Account) => void;
     onEdit: (account: Account) => void;
+    onRefresh: () => void;
 }
 
-export default function AccountList({ accounts, onDelete, onEdit }: AccountListProps) {
+export default function AccountList({ accounts, onDelete, onEdit, onRefresh }: AccountListProps) {
     if (!accounts || accounts.length === 0) {
         return (
             <Box textAlign="center" py={5}>
@@ -27,6 +28,7 @@ export default function AccountList({ accounts, onDelete, onEdit }: AccountListP
                     account={account}
                     onDelete={onDelete}
                     onEdit={onEdit}
+                    onRefresh={onRefresh}
                 />
             ))}
         </Box>
