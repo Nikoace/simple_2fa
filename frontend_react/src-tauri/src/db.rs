@@ -37,14 +37,9 @@ pub enum DbError {
     Sqlite(#[from] rusqlite::Error),
     #[error("Account not found: id={0}")]
     NotFound(i64),
-    #[error("Invalid secret: {0}")]
-    InvalidSecret(String),
-}
-
-impl From<TotpError> for DbError {
-    fn from(e: TotpError) -> Self {
-        DbError::InvalidSecret(e.to_string())
-    }
+    // 使用 transparent 直接透传 TotpError，避免重复 "Invalid secret:" 前缀
+    #[error(transparent)]
+    InvalidSecret(#[from] TotpError),
 }
 
 /// Initialize the database, creating the accounts table if it doesn't exist.
