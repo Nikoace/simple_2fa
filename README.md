@@ -1,114 +1,84 @@
 # Simple 2FA Authenticator
 
-一个现代化、基于 Web 的双因子身份验证 (2FA) 器，支持 TOTP 算法、屏幕 QR 码识别和流畅的动画体验。
+一个现代化、轻量级的桌面双因子身份验证 (2FA) 器，基于 Tauri 2 和 React 构建。支持 TOTP 算法和桌面级原生体验。
 
 ## 🌟 功能特性
 
-- **流畅的 TOTP 动画**：使用前端本地计算(进度条)和 `requestAnimationFrame` 实现平滑的倒计时效果。
-- **安全生成**：TOTP 代码在后端安全环境生成，避免密钥泄露到前端。
+- **流畅的 TOTP 动画**：使用前端本地计算和 `requestAnimationFrame` 实现平滑的倒计时效果。
+- **本地安全环境**：作为独立的 Tauri 桌面应用运行，不依赖 Web 浏览器环境。
+- **安全生成**：TOTP 代码在 Rust 本地安全环境生成，高效且安全。
 - **一键复制**：点击代码即可复制到剪贴板。
 - **账户管理**：支持账户的添加、编辑和删除。
-- **QR 码识别**：直接捕获并解析屏幕上的 QR 码，无需手机扫描。
-- **MCP 协议支持**：内置 Model Context Protocol (MCP) 服务器，支持 AI 助手获取当前 2FA 代码。
-- **持久化存储**：后端使用 SQLite 安全存储账户密钥。
-- **响应式设计**：基于 React 和 Material UI (MUI)，适配各种屏幕尺寸。
+- **持久化存储**：本地使用 SQLite 安全存储账户数据。
+- **跨平台桌面支持**：完美支持 Windows / Linux / macOS。
 
 ## 🛠 技术栈
 
-### 前端
-- **框架**：React 18 + TypeScript
+### 桌面端 & 后端 (Rust)
+- **框架**：Tauri 2
+- **数据库**：SQLite (rusqlite)
+- **TOTP 库**：totp-rs
+- **测试**：cargo test
+
+### 前端 (React)
+- **框架**：React 19 + TypeScript
 - **构建工具**：Vite + Bun
 - **UI 组件库**：Material UI (MUI)
-- **TOTP 库**：otpauth
-- **QR 码解析**：jsQR
-
-### 后端
-- **框架**：FastAPI (Python)
-- **数据库**：SQLite + SQLModel
-- **AI 协议**：Model Context Protocol (MCP)
-- **包管理**：uv
-- **测试**：Pytest
+- **测试**：vitest + @testing-library/react
 
 ## 🚀 快速开始
-
-### 一键启动 (推荐)
-
-使用项目根目录下的脚本一键启动后端和前端服务：
-
-```bash
-./dev_run.sh
-```
-
-### 手动启动
 
 ### 1. 环境准备
 
 确保您的系统已安装：
-- **Python 3.13** 和 **uv**
-- **Bun** (用于前端构建)
+- **Rust Toolchain** (cargo, rustc 等)
+- **Bun** (用于前端构建与包管理)
+- **系统层构建依赖** (Linux: `webkit2gtk-4.1`, `libappindicator3`, `build-essential` 等，具体参考 Tauri 文档)
 
-### 2. 后端设置
-
-```bash
-# 进入后端目录
-cd backend
-
-# 创建虚拟环境并安装依赖
-uv venv
-source .venv/bin/activate
-uv pip install -r requirements.txt
-
-# 启动后端服务
-uvicorn app.main:app --reload
-```
-
-后端服务将在 `http://localhost:8000` 启动。
-
-### 3. 前端设置
+### 2. 开发模式
 
 ```bash
 # 进入前端目录
 cd frontend_react
 
-# 安装依赖
+# 安装前端依赖
 bun install
 
-# 启动开发服务器
-bun run dev
+# 启动完整的 Tauri 开发环境 (包括前端服务器和 Rust 进程)
+bun run tauri dev
 ```
 
-前端应用将在 `http://localhost:5173` 启动（具体端口见终端输出）。
+### 3. 构建发布版本
 
-### 4. 构建生产版本
+构建当前平台的安装包/可执行文件：
 
 ```bash
 cd frontend_react
-bun run build
+bun run tauri build
 ```
+构建产物将位于 `frontend_react/src-tauri/target/release` 目录。
 
-构建产物将位于 `frontend_react/dist` 目录。
-
-## 🐳 Docker 部署
-
-coming soon...
+如果需要交叉编译（例如 Linux 编 Windows）：
+```bash
+bun run tauri build --target x86_64-pc-windows-gnu
+```
 
 ## 📁 项目结构
 
 ```text
 simple_2fa/
-├── backend/            # Python FastAPI 后端
-│   ├── app/            # 应用核心代码
-│   │   ├── api/        # API 路由
-│   │   ├── core/       # 核心逻辑 (TOTP 等)
-│   │   └── main.py     # 入口文件
-│   └── tests/          # Pytest 测试
-├── frontend_react/     # React TypeScript 前端
-│   ├── src/            # 源代码
-│   │   ├── components/ # UI 组件
-│   │   ├── types.ts    # 类型定义
-│   │   └── App.tsx     # 主应用组件
-│   ├── vite.config.ts  # Vite 配置
-│   └── tsconfig.json   # TypeScript 配置
+├── frontend_react/     # 前端 React 代码 & Tauri 容器
+│   ├── src/            # 前端 TSX 源码
+│   │   ├── components/ # React UI 组件
+│   │   ├── tauriApi.ts # 与 Tauri Rust 的 IPC 通信层
+│   │   └── App.tsx     # 主应用入口
+│   ├── src-tauri/      # Tauri Rust 后端代码
+│   │   ├── src/        # Rust 源码 (db.rs, totp.rs, commands.rs 等)
+│   │   └── Cargo.toml  # Rust 依赖配置
+│   ├── vite.config.ts  # Vite 配置文件
+│   └── package.json    # npm 依赖 / Tauri Scripts
+├── backup/             # 遗留的 Python FastAPI 后端及 Docker 备份
+├── planning/           # 规划与开发记录文档 (task.md, walkthrough.md)
 └── README.md           # 项目文档
 ```
 
