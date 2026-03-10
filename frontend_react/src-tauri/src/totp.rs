@@ -27,6 +27,8 @@ fn normalize_secret(secret: &str) -> String {
 
 /// Create a TOTP instance from a raw secret string.
 /// Handles normalization and validation.
+/// Uses new_unchecked to support short secrets (e.g. 80-bit/16-char),
+/// which are common in services like Google Authenticator.
 fn create_totp(secret: &str) -> Result<TOTP, TotpError> {
     let normalized = normalize_secret(secret);
 
@@ -34,7 +36,7 @@ fn create_totp(secret: &str) -> Result<TOTP, TotpError> {
         .to_bytes()
         .map_err(|e| TotpError::InvalidSecret(e.to_string()))?;
 
-    TOTP::new(
+    Ok(TOTP::new_unchecked(
         Algorithm::SHA1,
         6,
         1,
@@ -42,8 +44,7 @@ fn create_totp(secret: &str) -> Result<TOTP, TotpError> {
         secret_bytes,
         None,          // issuer
         String::new(), // account_name
-    )
-    .map_err(|e| TotpError::GenerationFailed(e.to_string()))
+    ))
 }
 
 /// Generate a 6-digit TOTP code for the given secret.
@@ -78,9 +79,8 @@ pub fn validate_secret(secret: &str) -> Result<bool, TotpError> {
 mod tests {
     use super::*;
 
-    // 128-bit minimum required by totp-rs (>= 16 bytes when decoded)
-    // This 32-char Base32 secret decodes to 20 bytes = 160 bits
-    const VALID_SECRET: &str = "JBSWY3DPEHPK3PXPJBSWY3DPEHPK3PXP";
+    // 80-bit secret (16 Base32 chars = 10 bytes), common in Google Authenticator etc.
+    const VALID_SECRET: &str = "JBSWY3DPEHPK3PXP";
 
     #[test]
     fn test_normalize_secret_uppercase() {
@@ -139,8 +139,8 @@ mod tests {
 
     #[test]
     fn test_validate_secret_valid_lowercase() {
-        // Should handle lowercase secrets (same long secret, lowercase)
-        assert!(validate_secret("jbswy3dpehpk3pxpjbswy3dpehpk3pxp").unwrap());
+        // Should handle lowercase secrets
+        assert!(validate_secret("jbswy3dpehpk3pxp").unwrap());
     }
 
     #[test]
@@ -153,8 +153,15 @@ mod tests {
 
     #[test]
     fn test_validate_secret_with_spaces() {
-        // Use a long-enough secret with spaces (>= 128 bits after decode)
-        assert!(validate_secret("JBSW Y3DP EHPK 3PXP JBSW Y3DP EHPK 3PXP").unwrap());
+        // Secrets with spaces should still work after normalization
+        assert!(validate_secret("JBSW Y3DP EHPK 3PXP").unwrap());
+    }
+
+    #[test]
+    fn test_generate_totp_short_secret() {
+        // 80-bit (10 bytes) secrets should work — common in real services
+        let code = generate_totp("JBSWY3DPEHPK3PXP").unwrap();
+        assert_eq!(code.len(), 6);
     }
 
     #[test]

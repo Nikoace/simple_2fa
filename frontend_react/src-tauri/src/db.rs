@@ -202,7 +202,7 @@ pub fn delete_account(conn: &Connection, id: i64) -> Result<(), DbError> {
 mod tests {
     use super::*;
 
-    const VALID_SECRET: &str = "JBSWY3DPEHPK3PXPJBSWY3DPEHPK3PXP";
+    const VALID_SECRET: &str = "JBSWY3DPEHPK3PXP";
 
     fn setup_db() -> Connection {
         init_db_memory().unwrap()
