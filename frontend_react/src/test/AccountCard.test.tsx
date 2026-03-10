@@ -18,24 +18,25 @@ describe('AccountCard', () => {
 
     const mockOnDelete = vi.fn();
     const mockOnEdit = vi.fn();
+    const mockOnRefresh = vi.fn();
 
     it('should render issuer name', () => {
         render(
-            <AccountCard account={mockAccount} onDelete={mockOnDelete} onEdit={mockOnEdit} />
+            <AccountCard account={mockAccount} onDelete={mockOnDelete} onEdit={mockOnEdit} onRefresh={mockOnRefresh} />
         );
         expect(screen.getByText('GitHub')).toBeInTheDocument();
     });
 
     it('should render account name', () => {
         render(
-            <AccountCard account={mockAccount} onDelete={mockOnDelete} onEdit={mockOnEdit} />
+            <AccountCard account={mockAccount} onDelete={mockOnDelete} onEdit={mockOnEdit} onRefresh={mockOnRefresh} />
         );
         expect(screen.getByText('user@example.com')).toBeInTheDocument();
     });
 
     it('should render TOTP code', () => {
         render(
-            <AccountCard account={mockAccount} onDelete={mockOnDelete} onEdit={mockOnEdit} />
+            <AccountCard account={mockAccount} onDelete={mockOnDelete} onEdit={mockOnEdit} onRefresh={mockOnRefresh} />
         );
         expect(screen.getByText('123456')).toBeInTheDocument();
     });
@@ -43,21 +44,21 @@ describe('AccountCard', () => {
     it('should show "Unknown" when issuer is empty', () => {
         const noIssuer = { ...mockAccount, issuer: '' };
         render(
-            <AccountCard account={noIssuer} onDelete={mockOnDelete} onEdit={mockOnEdit} />
+            <AccountCard account={noIssuer} onDelete={mockOnDelete} onEdit={mockOnEdit} onRefresh={mockOnRefresh} />
         );
         expect(screen.getByText('Unknown')).toBeInTheDocument();
     });
 
     it('should render progress bar', () => {
         render(
-            <AccountCard account={mockAccount} onDelete={mockOnDelete} onEdit={mockOnEdit} />
+            <AccountCard account={mockAccount} onDelete={mockOnDelete} onEdit={mockOnEdit} onRefresh={mockOnRefresh} />
         );
         expect(screen.getByRole('progressbar')).toBeInTheDocument();
     });
 
     it('should render edit and delete buttons', () => {
         render(
-            <AccountCard account={mockAccount} onDelete={mockOnDelete} onEdit={mockOnEdit} />
+            <AccountCard account={mockAccount} onDelete={mockOnDelete} onEdit={mockOnEdit} onRefresh={mockOnRefresh} />
         );
         expect(screen.getByLabelText('Edit')).toBeInTheDocument();
         expect(screen.getByLabelText('Delete')).toBeInTheDocument();

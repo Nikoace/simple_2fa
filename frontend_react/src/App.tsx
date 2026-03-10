@@ -113,7 +113,7 @@ function App() {
         </AppBar>
 
         <Container maxWidth="sm" sx={{ mt: 4 }}>
-          <AccountList accounts={accounts} onDelete={confirmDelete} onEdit={handleEdit} />
+          <AccountList accounts={accounts} onDelete={confirmDelete} onEdit={handleEdit} onRefresh={fetchAccounts} />
         </Container>
 
         <AddAccountModal

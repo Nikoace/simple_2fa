@@ -4,12 +4,13 @@ import { Card, CardContent, Typography, LinearProgress, IconButton, Box, Tooltip
 import { ContentCopy, Delete, Edit } from '@mui/icons-material';
 
 interface AccountCardProps {
-    account: Account;
-    onDelete: (account: Account) => void;
-    onEdit: (account: Account) => void;
+    readonly account: Account;
+    readonly onDelete: (account: Account) => void;
+    readonly onEdit: (account: Account) => void;
+    readonly onRefresh: () => void;
 }
 
-export default function AccountCard({ account, onDelete, onEdit }: AccountCardProps) {
+export default function AccountCard({ account, onDelete, onEdit, onRefresh }: AccountCardProps) {
     const { name, issuer, code, ttl } = account;
     const [timeLeft, setTimeLeft] = useState(ttl);
     const [progress, setProgress] = useState(0);
@@ -22,18 +23,19 @@ export default function AccountCard({ account, onDelete, onEdit }: AccountCardPr
     useEffect(() => {
         const timer = setInterval(() => {
             setTimeLeft((prev) => {
-                const newTime = prev > 0 ? prev - 1 : 0;
-                return newTime;
+                if (prev <= 1) {
+                    // 验证码过期，立即触发刷新获取新 code
+                    onRefresh();
+                    return 30; // 先用 30 保持进度条连贯，实际值会被 ttl 更新覆盖
+                }
+                return prev - 1;
             });
         }, 1000);
 
         return () => clearInterval(timer);
-    }, []);
+    }, [onRefresh]);
 
     useEffect(() => {
-        // ttl is usually 30s.
-        // progress = (timeLeft / 30) * 100 ?
-        // Backend returns ttl. period is 30.
         const period = 30;
         const newProgress = (timeLeft / period) * 100;
         setProgress(newProgress);
