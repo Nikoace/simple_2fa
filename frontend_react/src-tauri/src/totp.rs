@@ -1,5 +1,5 @@
 use thiserror::Error;
-use totp_rs::{Algorithm, Secret, TOTP};
+use totp_rs::{Algorithm, TOTP};
 
 #[derive(Error, Debug)]
 pub enum TotpError {
@@ -10,31 +10,31 @@ pub enum TotpError {
 }
 
 /// Normalize a Base32 secret by:
-/// 1. Stripping whitespace
+/// 1. Stripping all non-Base32 characters (whitespace, dashes, etc.)
 /// 2. Converting to uppercase
-/// 3. Adding correct padding (Base32 requires length as multiple of 8)
+/// This mirrors pyotp's lenient behavior — no strict padding required.
 fn normalize_secret(secret: &str) -> String {
-    let cleaned: String = secret
+    secret
         .chars()
-        .filter(|c| !c.is_whitespace())
+        .filter(|c| c.is_ascii_alphanumeric() || *c == '=')
         .collect::<String>()
-        .to_uppercase();
-
-    // Add padding if needed (Base32 requires length as multiple of 8)
-    let padding_needed = (8 - cleaned.len() % 8) % 8;
-    format!("{}{}", cleaned, "=".repeat(padding_needed))
+        .to_uppercase()
 }
 
 /// Create a TOTP instance from a raw secret string.
-/// Handles normalization and validation.
-/// Uses new_unchecked to support short secrets (e.g. 80-bit/16-char),
-/// which are common in services like Google Authenticator.
+/// Uses base32 crate directly for decoding (more lenient than totp-rs Secret::Encoded).
+/// Uses new_unchecked to support short secrets (e.g. 80-bit/16-char).
 fn create_totp(secret: &str) -> Result<TOTP, TotpError> {
     let normalized = normalize_secret(secret);
 
-    let secret_bytes = Secret::Encoded(normalized)
-        .to_bytes()
-        .map_err(|e| TotpError::InvalidSecret(e.to_string()))?;
+    // 直接使用 base32 crate 解码，比 totp-rs 的 Secret::Encoded 更宽容
+    // 不要求严格的 RFC 4648 padding 规则
+    let secret_bytes = base32::decode(base32::Alphabet::Rfc4648 { padding: false }, &normalized)
+        .ok_or_else(|| TotpError::InvalidSecret("Could not decode base32 secret".to_string()))?;
+
+    if secret_bytes.is_empty() {
+        return Err(TotpError::InvalidSecret("Secret is empty".to_string()));
+    }
 
     Ok(TOTP::new_unchecked(
         Algorithm::SHA1,
@@ -97,17 +97,25 @@ mod tests {
     }
 
     #[test]
-    fn test_normalize_secret_adds_padding() {
-        // "ABC" has length 3, needs 5 padding chars to reach 8
-        let result = normalize_secret("ABC");
-        assert_eq!(result, "ABC=====");
+    fn test_normalize_secret_strips_dashes() {
+        // Some services format secrets with dashes
+        let result = normalize_secret("JBSW-Y3DP-EHPK-3PXP");
+        assert_eq!(result, "JBSWY3DPEHPK3PXP");
     }
 
     #[test]
-    fn test_normalize_secret_no_padding_needed() {
-        // Length 8 - no padding needed
-        let result = normalize_secret("ABCDEFGH");
-        assert_eq!(result, "ABCDEFGH");
+    fn test_normalize_secret_preserves_equals() {
+        // Padding chars should be kept
+        let result = normalize_secret("ABCDEFGH========");
+        assert_eq!(result, "ABCDEFGH========");
+    }
+
+    #[test]
+    fn test_generate_totp_25char_secret() {
+        // 25-char secret (produces invalid 7-char padding under strict Base32)
+        // This is the real-world case that was failing
+        let code = generate_totp("HNVNEEXPPAQWTYDFNPYRCFSWDQ").unwrap();
+        assert_eq!(code.len(), 6);
     }
 
     #[test]
@@ -145,7 +153,8 @@ mod tests {
 
     #[test]
     fn test_validate_secret_invalid() {
-        let result = validate_secret("!!!invalid!!!");
+        // Empty / all-special-chars secret should fail
+        let result = validate_secret("");
         assert!(result.is_err());
         let err_msg = result.unwrap_err().to_string();
         assert!(err_msg.contains("Invalid secret"), "Got: {}", err_msg);
@@ -166,13 +175,13 @@ mod tests {
 
     #[test]
     fn test_generate_totp_invalid_secret() {
-        let result = generate_totp("!!!invalid!!!");
+        let result = generate_totp("");
         assert!(result.is_err());
     }
 
     #[test]
     fn test_get_ttl_invalid_secret() {
-        let result = get_ttl("!!!invalid!!!");
+        let result = get_ttl("");
         assert!(result.is_err());
     }
 }

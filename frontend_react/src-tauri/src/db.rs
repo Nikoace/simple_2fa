@@ -232,7 +232,7 @@ mod tests {
     #[test]
     fn test_create_account_invalid_secret() {
         let conn = setup_db();
-        let result = create_account(&conn, "Test", Some("Test"), "invalid-secret!");
+        let result = create_account(&conn, "Test", Some("Test"), "");
         assert!(result.is_err());
         let err = result.unwrap_err().to_string();
         assert!(err.contains("Invalid secret"), "Got: {}", err);
@@ -282,7 +282,7 @@ mod tests {
         let conn = setup_db();
         let created = create_account(&conn, "Test", Some("Corp"), VALID_SECRET).unwrap();
 
-        let result = update_account(&conn, created.id, None, None, Some("invalid!"));
+        let result = update_account(&conn, created.id, None, None, Some(""));
         assert!(result.is_err());
         let err = result.unwrap_err().to_string();
         assert!(err.contains("Invalid secret"), "Got: {}", err);
