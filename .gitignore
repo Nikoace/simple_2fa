@@ -175,3 +175,10 @@ frontend_react/node_modules/
 frontend_react/.vite/
 *.tsbuildinfo
 .eslintcache
+
+# Tauri / Rust
+frontend_react/src-tauri/target/
+frontend_react/src-tauri/gen/
+
+# Gemini / Antigravity
+.gemini/

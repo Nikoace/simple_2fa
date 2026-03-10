@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Dialog, DialogTitle, DialogContent, Tabs, Tab, Box, TextField, Button, DialogActions, Typography, Alert, CircularProgress } from '@mui/material';
 import jsQR from 'jsqr';
 import { Account } from '../types';
+import { addAccount, updateAccount } from '../tauriApi';
 
 interface AddAccountModalProps {
     open: boolean;
@@ -148,37 +149,22 @@ export default function AddAccountModal({ open, onClose, onAccountAdded, initial
         }
 
         try {
-            const url = initialData?.id
-                ? `/api/accounts/${initialData.id}`
-                : '/api/accounts';
-
-            const method = initialData?.id ? 'PUT' : 'POST';
-
-            // Construct payload: exclude secret if empty during update
-            const payload: Partial<AccountForm> = {
-                name: form.name,
-                issuer: form.issuer
-            };
-
-            if (form.secret) {
-                payload.secret = form.secret;
-            }
-
-            const res = await fetch(url, {
-                method: method,
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            });
-
-            if (res.ok) {
-                onAccountAdded();
-                handleClose();
+            if (initialData?.id) {
+                // Update existing account via Tauri invoke
+                await updateAccount(
+                    initialData.id,
+                    form.name,
+                    form.issuer,
+                    form.secret || undefined
+                );
             } else {
-                const errData = await res.json().catch(() => ({}));
-                setError(errData.detail || 'Failed to save account.');
+                // Create new account via Tauri invoke
+                await addAccount(form.name, form.issuer, form.secret);
             }
-        } catch {
-            setError('Network error: Could not reach server.');
+            onAccountAdded();
+            handleClose();
+        } catch (error) {
+            setError(String(error));
         }
     };
 
