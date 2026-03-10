@@ -63,6 +63,12 @@ bunx vitest run → 3 files, 20 tests passed
 bun run tauri dev → ✅ 编译成功，应用窗口正常启动
 ```
 
+### 后期修复 (Bugfixes)
+
+- **Base32 兼容性**: 将 `totp-rs` 严格的 `Secret::Encoded` 替换为 `base32::decode(padding: false)`，并移除 128-bit 最低长度限制，以支持各种常见（如 Google Authenticator）的短 Secret 和非标准 Padding Secret。
+- **UI 进度条白屏**: 在 `AccountCard` 倒计时归零时，通过 `onRefresh` 回调主动触发后端验证码刷新，消除了以前被动轮询导致的 5 秒进度条卡顿问题。
+- **Tauri 构建 ID**: 修复了 Windows/Linux CI 构建中 `com.tauri.dev` 唯一性校验由于默认值未修改而报错的问题。
+
 ## 待完成
 
 - [ ] QR 码扫描在 Tauri webview 中的兼容性验证

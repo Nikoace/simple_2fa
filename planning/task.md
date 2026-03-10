@@ -21,6 +21,11 @@
 - [x] 修改 `AddAccountModal.tsx` 替换 `fetch`
 - [x] 移除 Vite proxy 配置
 - [x] 添加前端测试 (20/20 pass)
+## 问题修复与体验优化
+- [x] 修复 Tauri 构建 identifier 冲突 (`com.nikoace.simple-2fa`)
+- [x] 解决 128-bit Secret 长度限制，支持 80-bit 等常见长度 (`TOTP::new_unchecked`)
+- [x] 允容非标准 Base32 Padding 和特殊字符 (`base32` crate)
+- [x] 修复前端验证码过期时进度条“卡顿” 5 秒的问题（增加 `onRefresh` 主动触发）
 
 ## 验证与打包
 - [x] `cargo test` 全部通过 (23/23)
