@@ -27,6 +27,7 @@
 - [x] 允容非标准 Base32 Padding 和特殊字符 (`base32` crate)
 - [x] 修复前端验证码过期时进度条“卡顿” 5 秒的问题（增加 `onRefresh` 主动触发）
 - [x] 清理旧版 Python 后端及 Docker 冗余代码至 `backup/` 目录
+- [x] 扫描清理代码库中的敏感数据（未发现遗留 Token/Secret/API Key）
 
 ## 验证与打包
 - [x] `cargo test` 全部通过 (23/23)
