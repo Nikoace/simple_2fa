@@ -26,6 +26,7 @@
 - [x] 解决 128-bit Secret 长度限制，支持 80-bit 等常见长度 (`TOTP::new_unchecked`)
 - [x] 允容非标准 Base32 Padding 和特殊字符 (`base32` crate)
 - [x] 修复前端验证码过期时进度条“卡顿” 5 秒的问题（增加 `onRefresh` 主动触发）
+- [x] 清理旧版 Python 后端及 Docker 冗余代码至 `backup/` 目录
 
 ## 验证与打包
 - [x] `cargo test` 全部通过 (23/23)
