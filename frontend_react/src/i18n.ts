@@ -29,10 +29,13 @@ void i18n
         },
     });
 
+document.documentElement.lang = initialLanguage;
+
 i18n.on('languageChanged', (lng) => {
     if (supportedLanguages.includes(lng as SupportedLanguage)) {
         localStorage.setItem(LANGUAGE_STORAGE_KEY, lng);
     }
+    document.documentElement.lang = lng;
 });
 
 export default i18n;
