@@ -2,10 +2,13 @@ import { useState, useEffect, useCallback } from 'react'
 import {
   Container, Typography, Box, Button, AppBar, Toolbar, CssBaseline,
   Dialog, DialogTitle, DialogContent, DialogActions, DialogContentText,
-  FormControl, FormControlLabel, FormLabel, Radio, RadioGroup,
+  FormControl, InputLabel, MenuItem, Select,
+  SelectChangeEvent,
+  FormControlLabel, FormLabel, Radio, RadioGroup,
   Snackbar, Alert
 } from '@mui/material'
 import { Add, FileDownload, FileUpload } from '@mui/icons-material'
+import { useTranslation } from 'react-i18next'
 import AccountList from './components/AccountList'
 import AddAccountModal from './components/AddAccountModal'
 import PasswordDialog from './components/PasswordDialog'
@@ -16,11 +19,18 @@ import {
   exportAccounts, previewImport, importAccounts,
   pickExportPath, pickImportPath,
 } from './tauriApi'
+import { supportedLanguages, type SupportedLanguage } from './i18n'
 
 function App() {
+  const { t, i18n } = useTranslation()
   const [accounts, setAccounts] = useState<Account[]>([])
   const [modalOpen, setModalOpen] = useState(false)
   const [editingAccount, setEditingAccount] = useState<Account | null>(null)
+  const [language, setLanguage] = useState<SupportedLanguage>(
+    (supportedLanguages.includes(i18n.resolvedLanguage as SupportedLanguage)
+      ? i18n.resolvedLanguage
+      : 'zh-CN') as SupportedLanguage
+  )
 
   // Delete
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
@@ -69,13 +79,18 @@ function App() {
     try {
       await deleteAccount(accountToDelete.id)
       fetchAccounts()
-      showSnackbar('Account deleted successfully')
+      showSnackbar(t('app.snackbar.accountDeleted'))
     } catch (error) {
       showSnackbar(String(error), 'error')
     } finally {
       setDeleteDialogOpen(false)
       setAccountToDelete(null)
     }
+  }
+
+  const handleDeleteCancel = () => {
+    setDeleteDialogOpen(false)
+    setAccountToDelete(null)
   }
 
   // --- Edit ---
@@ -89,7 +104,16 @@ function App() {
   }
   const handleAccountAdded = () => {
     fetchAccounts()
-    showSnackbar(editingAccount ? 'Account updated' : 'Account added')
+    showSnackbar(editingAccount ? t('app.snackbar.accountUpdated') : t('app.snackbar.accountAdded'))
+  }
+
+  const handleLanguageChange = async (newLanguage: SupportedLanguage) => {
+    setLanguage(newLanguage)
+    await i18n.changeLanguage(newLanguage)
+  }
+
+  const onLanguageSelectChange = (event: SelectChangeEvent<SupportedLanguage>) => {
+    void handleLanguageChange(event.target.value)
   }
 
   // --- Export flow ---
@@ -110,7 +134,7 @@ function App() {
       const filePath = await pickExportPath()
       if (!filePath) return
       const count = await exportAccounts(password, filePath, selectedExportIds)
-      showSnackbar(`成功导出 ${count} 个账户`)
+      showSnackbar(t('app.snackbar.exportSuccess', { count }))
     } catch (error) {
       showSnackbar(String(error), 'error')
     }
@@ -154,9 +178,13 @@ function App() {
         importStrategy,
         selectedIndices
       )
-      const msg = `导入完成：新增 ${result.imported}，跳过 ${result.skipped}，覆盖 ${result.overwritten}`
+      const msg = t('app.snackbar.importSummary', {
+        imported: result.imported,
+        skipped: result.skipped,
+        overwritten: result.overwritten,
+      })
       showSnackbar(
-        result.errors.length > 0 ? `${msg}，${result.errors.length} 个错误` : msg,
+        result.errors.length > 0 ? t('app.snackbar.importSummaryWithErrors', { summary: msg, errors: result.errors.length }) : msg,
         result.errors.length > 0 ? 'error' : 'success'
       )
       fetchAccounts()
@@ -190,20 +218,41 @@ function App() {
         <AppBar position="static">
           <Toolbar>
             <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-              Authenticator
+              {t('app.title')}
             </Typography>
+            <FormControl size="small" sx={{ minWidth: 140, mr: 2 }}>
+              <InputLabel id="language-select-label" sx={{ color: 'common.white' }}>
+                {t('app.language')}
+              </InputLabel>
+              <Select
+                labelId="language-select-label"
+                value={language}
+                label={t('app.language')}
+                onChange={onLanguageSelectChange}
+                sx={{
+                  color: 'common.white',
+                  '.MuiOutlinedInput-notchedOutline': { borderColor: 'rgba(255,255,255,0.6)' },
+                  '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: 'common.white' },
+                  '.MuiSvgIcon-root': { color: 'common.white' },
+                }}
+              >
+                <MenuItem value="zh-CN">中文</MenuItem>
+                <MenuItem value="en">English</MenuItem>
+                <MenuItem value="ja">日本語</MenuItem>
+              </Select>
+            </FormControl>
             <Button color="inherit" startIcon={<FileUpload />} onClick={handleImportClick}>
-              导入
+              {t('app.import')}
             </Button>
             <Button color="inherit" startIcon={<FileDownload />} onClick={handleExportClick}>
-              导出
+              {t('app.export')}
             </Button>
             <Button
               color="inherit"
               startIcon={<Add />}
               onClick={() => { setEditingAccount(null); setModalOpen(true) }}
             >
-              Add Account
+              {t('app.addAccount')}
             </Button>
           </Toolbar>
         </AppBar>
@@ -222,9 +271,9 @@ function App() {
         {/* Export: Step 1 — Select accounts */}
         <AccountSelectDialog
           open={exportSelectOpen}
-          title="选择要导出的账户"
+          title={t('app.exportSelectTitle')}
           items={accounts.map(a => ({ name: a.name, issuer: a.issuer || null }))}
-          confirmLabel="下一步"
+          confirmLabel={t('app.nextStep')}
           onConfirm={handleExportSelectConfirm}
           onClose={() => setExportSelectOpen(false)}
         />
@@ -248,19 +297,19 @@ function App() {
         {/* Import: Step 2 — Select accounts from preview */}
         <AccountSelectDialog
           open={importSelectOpen}
-          title="选择要导入的账户"
+          title={t('app.importSelectTitle')}
           items={importPreviewAccounts}
-          confirmLabel="导入"
+          confirmLabel={t('app.importAction')}
           extra={
             <FormControl size="small">
-              <FormLabel>重复账户处理</FormLabel>
+              <FormLabel>{t('app.duplicateHandling')}</FormLabel>
               <RadioGroup
                 row
                 value={importStrategy}
                 onChange={e => setImportStrategy(e.target.value as DuplicateStrategy)}
               >
-                <FormControlLabel value="Skip" control={<Radio size="small" />} label="跳过" />
-                <FormControlLabel value="Overwrite" control={<Radio size="small" />} label="覆盖" />
+                <FormControlLabel value="Skip" control={<Radio size="small" />} label={t('app.duplicateSkip')} />
+                <FormControlLabel value="Overwrite" control={<Radio size="small" />} label={t('app.duplicateOverwrite')} />
               </RadioGroup>
             </FormControl>
           }
@@ -268,18 +317,22 @@ function App() {
           onClose={resetImportState}
         />
 
-        {/* Delete Confirmation */}
-        <Dialog open={deleteDialogOpen} onClose={() => setDeleteDialogOpen(false)}>
-          <DialogTitle>Delete Account?</DialogTitle>
+        {/* Delete Confirmation Dialog */}
+        <Dialog
+          open={deleteDialogOpen}
+          onClose={handleDeleteCancel}
+        >
+          <DialogTitle>{t('app.deleteDialogTitle')}</DialogTitle>
           <DialogContent>
             <DialogContentText>
-              Are you sure you want to delete <strong>{accountToDelete?.name}</strong>?
-              This action cannot be undone.
+              {t('app.deleteDialogPrefix')} <strong>{accountToDelete?.name}</strong>? {t('app.deleteDialogSuffix')}
             </DialogContentText>
           </DialogContent>
           <DialogActions>
-            <Button onClick={() => { setDeleteDialogOpen(false); setAccountToDelete(null) }}>Cancel</Button>
-            <Button onClick={handleDeleteConfirm} color="error" autoFocus>Delete</Button>
+            <Button onClick={handleDeleteCancel}>{t('app.cancel')}</Button>
+            <Button onClick={handleDeleteConfirm} color="error" autoFocus>
+              {t('app.delete')}
+            </Button>
           </DialogActions>
         </Dialog>
 

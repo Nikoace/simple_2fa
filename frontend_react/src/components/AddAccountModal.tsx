@@ -1,14 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogTitle, DialogContent, Tabs, Tab, Box, TextField, Button, DialogActions, Typography, Alert, CircularProgress } from '@mui/material';
 import jsQR from 'jsqr';
+import { useTranslation } from 'react-i18next';
 import { Account } from '../types';
 import { addAccount, updateAccount } from '../tauriApi';
 
 interface AddAccountModalProps {
-    open: boolean;
-    onClose: () => void;
-    onAccountAdded: () => void;
-    initialData: Account | null;
+    readonly open: boolean;
+    readonly onClose: () => void;
+    readonly onAccountAdded: () => void;
+    readonly initialData: Account | null;
 }
 
 interface AccountForm {
@@ -18,6 +19,7 @@ interface AccountForm {
 }
 
 export default function AddAccountModal({ open, onClose, onAccountAdded, initialData }: AddAccountModalProps) {
+    const { t } = useTranslation();
     const [tab, setTab] = useState(0); // 0 = Scan, 1 = Manual
     const [form, setForm] = useState<AccountForm>({ name: '', issuer: '', secret: '' });
     const [error, setError] = useState('');
@@ -48,7 +50,7 @@ export default function AddAccountModal({ open, onClose, onAccountAdded, initial
 
     const handleStartCapture = async () => {
         setError('');
-        setStatus('Select the window/screen with the QR code...');
+        setStatus(t('addModal.statusSelectScreen'));
         setScanning(true);
 
         try {
@@ -77,7 +79,7 @@ export default function AddAccountModal({ open, onClose, onAccountAdded, initial
             const ctx = canvas.getContext('2d');
 
             if (!ctx) {
-                setError('Could not get canvas context');
+                setError(t('addModal.errors.canvas'));
                 return;
             }
 
@@ -106,12 +108,12 @@ export default function AddAccountModal({ open, onClose, onAccountAdded, initial
             if (foundCode) {
                 handleQrFound(foundCode);
             } else {
-                setError('No QR code found in the selection.');
+                setError(t('addModal.errors.noQr'));
             }
 
         } catch (err: unknown) {
             console.error(err);
-            setError('Capture cancelled or failed: ' + (err instanceof Error ? err.message : String(err)));
+            setError(t('addModal.errors.captureFailed', { message: err instanceof Error ? err.message : String(err) }));
         } finally {
             setScanning(false);
             setStatus('');
@@ -121,21 +123,21 @@ export default function AddAccountModal({ open, onClose, onAccountAdded, initial
     const handleQrFound = (data: string) => {
         try {
             if (!data.startsWith('otpauth://')) {
-                throw new Error('Not a valid OTP URL');
+                throw new Error(t('addModal.errors.invalidOtpUrl'));
             }
             const url = new URL(data);
             const params = new URLSearchParams(url.search);
             const secret = params.get('secret');
-            const issuer = params.get('issuer') || 'Unknown';
+            const issuer = params.get('issuer') || t('accountCard.unknownIssuer');
             const pathname = decodeURIComponent(url.pathname);
             // Clean up name
             const name = pathname.split(':').pop() || pathname.replace('/', '');
 
-            if (!secret) throw new Error('No secret found');
+            if (!secret) throw new Error(t('addModal.errors.noSecret'));
 
             setForm({ name, issuer, secret });
             setTab(1); // Switch to manual tab for editing
-            setStatus('QR Code scanned! You can edit details below.');
+            setStatus(t('addModal.statusQrScanned'));
         } catch (e: unknown) {
             setError(e instanceof Error ? e.message : String(e));
         }
@@ -144,7 +146,7 @@ export default function AddAccountModal({ open, onClose, onAccountAdded, initial
     const handleSubmit = async () => {
         // Validation: Secret is required for new accounts, but optional for updates (if unchanged)
         if (!form.name || (!initialData && !form.secret)) {
-            setError('Name and Secret are required.');
+            setError(t('addModal.errors.nameSecretRequired'));
             return;
         }
 
@@ -180,10 +182,10 @@ export default function AddAccountModal({ open, onClose, onAccountAdded, initial
 
     return (
         <Dialog open={open} onClose={handleClose} fullWidth maxWidth="sm">
-            <DialogTitle>{initialData ? 'Edit Account' : 'Add New Account'}</DialogTitle>
+            <DialogTitle>{initialData ? t('addModal.titleEdit') : t('addModal.titleAdd')}</DialogTitle>
             <Tabs value={tab} onChange={handleTabChange} variant="fullWidth">
-                <Tab label={initialData ? "Edit Details" : "Scan QR"} disabled={!!initialData && tab === 1} />
-                <Tab label="Manual Input" />
+                <Tab label={initialData ? t('addModal.tabEditDetails') : t('addModal.tabScan')} disabled={!!initialData && tab === 1} />
+                <Tab label={t('addModal.tabManual')} />
             </Tabs>
             <DialogContent sx={{ mt: 2, minHeight: 200 }}>
                 {status && <Alert severity="success" sx={{ mb: 2 }}>{status}</Alert>}
@@ -192,7 +194,7 @@ export default function AddAccountModal({ open, onClose, onAccountAdded, initial
                 {tab === 0 && !initialData && (
                     <Box textAlign="center" py={4}>
                         <Typography gutterBottom>
-                            Scan a QR code from your screen.
+                            {t('addModal.scanInstruction')}
                         </Typography>
                         <Button
                             variant="contained"
@@ -201,7 +203,7 @@ export default function AddAccountModal({ open, onClose, onAccountAdded, initial
                             disabled={scanning}
                             startIcon={scanning ? <CircularProgress size={20} /> : null}
                         >
-                            {scanning ? 'Scanning...' : 'Capture Screen'}
+                            {scanning ? t('addModal.scanning') : t('addModal.captureScreen')}
                         </Button>
                     </Box>
                 )}
@@ -211,31 +213,31 @@ export default function AddAccountModal({ open, onClose, onAccountAdded, initial
                         <TextField
                             margin="normal"
                             fullWidth
-                            label="Issuer (Service Name)"
+                            label={t('addModal.issuerLabel')}
                             value={form.issuer}
                             onChange={(e) => setForm({ ...form, issuer: e.target.value })}
                         />
                         <TextField
                             margin="normal"
                             fullWidth
-                            label="Account Name (Email/User)"
+                            label={t('addModal.accountNameLabel')}
                             value={form.name}
                             onChange={(e) => setForm({ ...form, name: e.target.value })}
                         />
                         <TextField
                             margin="normal"
                             fullWidth
-                            label="Secret Key"
+                            label={t('addModal.secretKeyLabel')}
                             value={form.secret}
                             onChange={(e) => setForm({ ...form, secret: e.target.value })}
-                            helperText="Base32 string"
+                            helperText={t('addModal.secretHelper')}
                         />
                     </Box>
                 )}
             </DialogContent>
             <DialogActions>
-                <Button onClick={handleClose}>Cancel</Button>
-                <Button onClick={handleSubmit} variant="contained">Save</Button>
+                <Button onClick={handleClose}>{t('addModal.cancel')}</Button>
+                <Button onClick={handleSubmit} variant="contained">{t('addModal.save')}</Button>
             </DialogActions>
         </Dialog>
     );

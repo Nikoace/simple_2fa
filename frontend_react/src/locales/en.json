@@ -1,0 +1,86 @@
+{
+  "app": {
+    "title": "Authenticator",
+    "addAccount": "Add Account",
+    "import": "Import",
+    "export": "Export",
+    "language": "Language",
+    "exportSelectTitle": "Select accounts to export",
+    "importSelectTitle": "Select accounts to import",
+    "nextStep": "Next",
+    "importAction": "Import",
+    "duplicateHandling": "Duplicate account handling",
+    "duplicateSkip": "Skip",
+    "duplicateOverwrite": "Overwrite",
+    "deleteDialogTitle": "Delete Account?",
+    "deleteDialogPrefix": "Are you sure you want to delete",
+    "deleteDialogSuffix": "This action cannot be undone.",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "snackbar": {
+      "accountDeleted": "Account deleted successfully",
+      "accountUpdated": "Account updated",
+      "accountAdded": "Account added",
+      "exportSuccess": "Exported {{count}} account(s) successfully",
+      "importSummary": "Import completed: added {{imported}}, skipped {{skipped}}, overwritten {{overwritten}}",
+      "importSummaryWithErrors": "{{summary}}, {{errors}} error(s)"
+    }
+  },
+  "accountList": {
+    "empty": "No accounts yet. Add one!"
+  },
+  "accountCard": {
+    "unknownIssuer": "Unknown",
+    "copyCode": "Copy Code",
+    "edit": "Edit",
+    "delete": "Delete"
+  },
+  "addModal": {
+    "titleAdd": "Add New Account",
+    "titleEdit": "Edit Account",
+    "tabScan": "Scan QR",
+    "tabEditDetails": "Edit Details",
+    "tabManual": "Manual Input",
+    "statusSelectScreen": "Select the window/screen with the QR code...",
+    "statusQrScanned": "QR Code scanned! You can edit details below.",
+    "scanInstruction": "Scan a QR code from your screen.",
+    "scanning": "Scanning...",
+    "captureScreen": "Capture Screen",
+    "issuerLabel": "Issuer (Service Name)",
+    "accountNameLabel": "Account Name (Email/User)",
+    "secretKeyLabel": "Secret Key",
+    "secretHelper": "Base32 string",
+    "save": "Save",
+    "cancel": "Cancel",
+    "errors": {
+      "canvas": "Could not get canvas context",
+      "noQr": "No QR code found in the selection.",
+      "captureFailed": "Capture cancelled or failed: {{message}}",
+      "invalidOtpUrl": "Not a valid OTP URL",
+      "noSecret": "No secret found",
+      "nameSecretRequired": "Name and Secret are required."
+    }
+  },
+  "passwordDialog": {
+    "titleExport": "Export Backup",
+    "titleImport": "Import Backup",
+    "passwordLabel": "Encryption Password",
+    "confirmPasswordLabel": "Confirm Password",
+    "helperExport": "Set a password to encrypt backup file",
+    "helperImport": "Enter the password for backup file",
+    "cancel": "Cancel",
+    "next": "Next",
+    "decrypt": "Decrypt",
+    "errors": {
+      "required": "Please enter a password",
+      "mismatch": "Passwords do not match"
+    }
+  },
+  "accountSelect": {
+    "selectAll": "Select all",
+    "unselectAll": "Unselect all",
+    "noIssuer": "(No issuer)",
+    "cancel": "Cancel",
+    "confirmWithCount": "{{label}} ({{count}})"
+  }
+}
