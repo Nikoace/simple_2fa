@@ -21,14 +21,10 @@ jobs:
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
 
-      - name: Cache Cargo
-        uses: actions/cache@v4
+      - name: Cache Rust
+        uses: Swatinem/rust-cache@v2
         with:
-          path: |
-            ~/.cargo/registry
-            ~/.cargo/git
-            frontend_react/src-tauri/target
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          workspaces: frontend_react/src-tauri
 
       - name: Run Rust tests
         working-directory: frontend_react/src-tauri
@@ -36,6 +32,12 @@ jobs:
 
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
+
+      - name: Cache Bun dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.bun/install/cache
+          key: ${{ runner.os }}-bun-${{ hashFiles('frontend_react/bun.lockb', 'frontend_react/bun.lock') }}
 
       - name: Install frontend dependencies
         working-directory: frontend_react
@@ -59,8 +61,19 @@ jobs:
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
 
+      - name: Cache Rust
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: frontend_react/src-tauri
+
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
+
+      - name: Cache Bun dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.bun/install/cache
+          key: ${{ runner.os }}-bun-${{ hashFiles('frontend_react/bun.lockb', 'frontend_react/bun.lock') }}
 
       - name: Install frontend dependencies
         working-directory: frontend_react
@@ -85,8 +98,19 @@ jobs:
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
 
+      - name: Cache Rust
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: frontend_react/src-tauri
+
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
+
+      - name: Cache Bun dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.bun/install/cache
+          key: ${{ runner.os }}-bun-${{ hashFiles('frontend_react/bun.lockb', 'frontend_react/bun.lock') }}
 
       - name: Install frontend dependencies
         working-directory: frontend_react
