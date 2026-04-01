@@ -1,0 +1,19 @@
+{
+  "$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json",
+  "packages": {
+    ".": {
+      "release-type": "node",
+      "package-name": "simple-2fa",
+      "changelog-path": "CHANGELOG.md",
+      "extra-files": [
+        "frontend_react/package.json",
+        "frontend_react/src-tauri/tauri.conf.json",
+        {
+          "type": "toml",
+          "path": "frontend_react/src-tauri/Cargo.toml",
+          "jsonpath": "$.package.version"
+        }
+      ]
+    }
+  }
+}
