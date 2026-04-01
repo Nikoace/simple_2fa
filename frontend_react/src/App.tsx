@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react'
 import {
   Container, Typography, Box, Button, AppBar, Toolbar, CssBaseline,
   Dialog, DialogTitle, DialogContent, DialogActions, DialogContentText,
-  FormControl, InputLabel, MenuItem, Select,
+  MenuItem, Select,
   SelectChangeEvent,
   FormControlLabel, FormLabel, Radio, RadioGroup,
   Snackbar, Alert
@@ -220,27 +220,26 @@ function App() {
             <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
               {t('app.title')}
             </Typography>
-            <FormControl size="small" sx={{ minWidth: 140, mr: 2 }}>
-              <InputLabel id="language-select-label" sx={{ color: 'common.white' }}>
-                {t('app.language')}
-              </InputLabel>
-              <Select
-                labelId="language-select-label"
-                value={language}
-                label={t('app.language')}
-                onChange={onLanguageSelectChange}
-                sx={{
-                  color: 'common.white',
-                  '.MuiOutlinedInput-notchedOutline': { borderColor: 'rgba(255,255,255,0.6)' },
-                  '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: 'common.white' },
-                  '.MuiSvgIcon-root': { color: 'common.white' },
-                }}
-              >
-                <MenuItem value="zh-CN">中文</MenuItem>
-                <MenuItem value="en">English</MenuItem>
-                <MenuItem value="ja">日本語</MenuItem>
-              </Select>
-            </FormControl>
+            <Select
+              value={language}
+              variant="standard"
+              disableUnderline
+              onChange={onLanguageSelectChange}
+              sx={{
+                mr: 2,
+                minWidth: 140,
+                color: 'common.white',
+                borderRadius: 1,
+                px: 1,
+                '&:hover': { bgcolor: 'rgba(255,255,255,0.1)' },
+                '.MuiSvgIcon-root': { color: 'common.white' },
+              }}
+              inputProps={{ 'aria-label': t('app.language') }}
+            >
+              <MenuItem value="zh-CN">中文</MenuItem>
+              <MenuItem value="en">English</MenuItem>
+              <MenuItem value="ja">日本語</MenuItem>
+            </Select>
             <Button color="inherit" startIcon={<FileUpload />} onClick={handleImportClick}>
               {t('app.import')}
             </Button>
