@@ -1,5 +1,5 @@
-import { describe, it, expect, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { afterEach, describe, it, expect, vi } from 'vitest';
+import { act, render, screen } from '@testing-library/react';
 import AccountCard from '../components/AccountCard';
 
 // Mock clipboard API
@@ -19,6 +19,11 @@ describe('AccountCard', () => {
     const mockOnDelete = vi.fn();
     const mockOnEdit = vi.fn();
     const mockOnRefresh = vi.fn();
+
+    afterEach(() => {
+        vi.useRealTimers();
+        vi.clearAllMocks();
+    });
 
     it('should render issuer name', () => {
         render(
@@ -62,5 +67,23 @@ describe('AccountCard', () => {
         );
         expect(screen.getByLabelText('Edit')).toBeInTheDocument();
         expect(screen.getByLabelText('Delete')).toBeInTheDocument();
+    });
+
+    it('should keep progress at zero while waiting for refreshed ttl', () => {
+        vi.useFakeTimers();
+
+        const expiringAccount = { ...mockAccount, ttl: 1 };
+
+        render(
+            <AccountCard account={expiringAccount} onDelete={mockOnDelete} onEdit={mockOnEdit} onRefresh={mockOnRefresh} />
+        );
+
+        act(() => {
+            vi.advanceTimersByTime(1000);
+        });
+
+        const progressBar = screen.getByRole('progressbar');
+        expect(progressBar).toHaveAttribute('aria-valuenow', '0');
+        expect(mockOnRefresh).toHaveBeenCalledTimes(1);
     });
 });

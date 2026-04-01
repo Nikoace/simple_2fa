@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Account } from '../types';
 import { Card, CardContent, Typography, LinearProgress, IconButton, Box, Tooltip } from '@mui/material';
 import { ContentCopy, Delete, Edit } from '@mui/icons-material';
@@ -15,34 +15,31 @@ export default function AccountCard({ account, onDelete, onEdit, onRefresh }: Ac
     const { t } = useTranslation();
     const { name, issuer, code, ttl } = account;
     const [timeLeft, setTimeLeft] = useState(ttl);
-    const [progress, setProgress] = useState(0);
-    const [isDanger, setIsDanger] = useState(false);
-
-    useEffect(() => {
-        setTimeLeft(ttl);
-    }, [ttl]);
+    const refreshPendingRef = useRef(false);
 
     useEffect(() => {
         const timer = setInterval(() => {
             setTimeLeft((prev) => {
                 if (prev <= 1) {
-                    // 验证码过期，立即触发刷新获取新 code
-                    onRefresh();
-                    return 30; // 先用 30 保持进度条连贯，实际值会被 ttl 更新覆盖
+                    return 0;
                 }
+
                 return prev - 1;
             });
         }, 1000);
 
         return () => clearInterval(timer);
-    }, [onRefresh]);
+    }, []);
 
     useEffect(() => {
-        const period = 30;
-        const newProgress = (timeLeft / period) * 100;
-        setProgress(newProgress);
-        setIsDanger(timeLeft < 5);
-    }, [timeLeft]);
+        if (timeLeft === 0 && !refreshPendingRef.current) {
+            refreshPendingRef.current = true;
+            onRefresh();
+        }
+    }, [onRefresh, timeLeft]);
+
+    const progress = (timeLeft / 30) * 100;
+    const isDanger = timeLeft < 5;
 
     const handleCopy = () => {
         const rawCode = code.replace(/ /g, '');
@@ -76,7 +73,14 @@ export default function AccountCard({ account, onDelete, onEdit, onRefresh }: Ac
                     variant="determinate"
                     value={progress}
                     color={isDanger ? 'error' : 'primary'}
-                    sx={{ mt: 2, height: 8, borderRadius: 4 }}
+                    sx={{
+                        mt: 2,
+                        height: 8,
+                        borderRadius: 4,
+                        '& .MuiLinearProgress-bar': {
+                            transition: 'transform 1s linear',
+                        },
+                    }}
                 />
                 <Box display="flex" justifyContent="flex-end" mt={1} gap={1}>
                     <Tooltip title={t('accountCard.edit')}>

@@ -27,7 +27,7 @@ export default function AccountList({ accounts, onDelete, onEdit, onRefresh }: A
         <Box>
             {accounts.map((account) => (
                 <AccountCard
-                    key={account.id}
+                    key={`${account.id}-${account.code}`}
                     account={account}
                     onDelete={onDelete}
                     onEdit={onEdit}
