@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
     Button,
     Checkbox,
@@ -40,11 +40,19 @@ export default function AccountSelectDialog({
     onClose,
 }: AccountSelectDialogProps) {
     const [checked, setChecked] = useState<boolean[]>([]);
+    // ref 持有最新 items，避免 open effect 依赖 items 导致轮询刷新时重置用户选择
+    const itemsRef = useRef(items);
+    itemsRef.current = items;
 
-    // 每次列表更新时重置为全选
+    // 对话框打开时初始化为全选，关闭时清空
+    // 不依赖 items，防止 5 秒轮询产生新引用时意外重置用户的手动选择
     useEffect(() => {
-        setChecked(items.map(() => true));
-    }, [items]);
+        if (open) {
+            setChecked(itemsRef.current.map(() => true));
+        } else {
+            setChecked([]);
+        }
+    }, [open]);
 
     const selectedCount = checked.filter(Boolean).length;
     const allSelected = selectedCount === items.length && items.length > 0;

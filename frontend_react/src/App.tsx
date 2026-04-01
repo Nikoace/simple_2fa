@@ -105,6 +105,7 @@ function App() {
 
   // Step 3: user entered password → pick file and export
   const handleExportPasswordConfirm = async (password: string) => {
+    setExportPasswordOpen(false)
     try {
       const filePath = await pickExportPath()
       if (!filePath) return
