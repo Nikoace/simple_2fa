@@ -42,6 +42,15 @@ export default function AccountSelectDialog({
 }: AccountSelectDialogProps) {
     const { t } = useTranslation();
     const [checked, setChecked] = useState<boolean[]>([]);
+    const itemsWithStableKeys = (() => {
+        const seen = new Map<string, number>();
+        return items.map((item) => {
+            const base = `${item.issuer ?? 'no-issuer'}:${item.name}`;
+            const count = (seen.get(base) ?? 0) + 1;
+            seen.set(base, count);
+            return { item, key: `${base}:${count}` };
+        });
+    })();
     // ref 持有最新 items，避免 open effect 依赖 items 导致轮询刷新时重置用户选择
     const itemsRef = useRef(items);
     useEffect(() => {
@@ -100,8 +109,8 @@ export default function AccountSelectDialog({
                         </ListItemButton>
                     </ListItem>
                     <Divider />
-                    {items.map((item, index) => (
-                        <ListItem key={`${item.issuer ?? 'no-issuer'}:${item.name}`} disablePadding>
+                    {itemsWithStableKeys.map(({ item, key }, index) => (
+                        <ListItem key={key} disablePadding>
                             <ListItemButton onClick={() => toggleItem(index)} dense>
                                 <ListItemIcon>
                                     <Checkbox

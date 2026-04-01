@@ -29,8 +29,6 @@ void i18n
         },
     });
 
-void i18n.changeLanguage(initialLanguage);
-
 i18n.on('languageChanged', (lng) => {
     if (supportedLanguages.includes(lng as SupportedLanguage)) {
         localStorage.setItem(LANGUAGE_STORAGE_KEY, lng);

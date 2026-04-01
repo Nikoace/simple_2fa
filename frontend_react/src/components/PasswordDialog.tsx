@@ -44,11 +44,12 @@ export default function PasswordDialog({ mode, open: isOpen, onConfirm, onClose 
         }
         // 不在这里调用 onClose()，让父组件控制对话框生命周期
         // 避免 import 流程中 resetImportState 提前清除 pendingImportPath
+        resetLocalState();
         onConfirm(password);
     };
 
     return (
-        <Dialog key={`${mode}-${isOpen ? 'open' : 'closed'}`} open={isOpen} onClose={handleClose} maxWidth="xs" fullWidth>
+        <Dialog open={isOpen} onClose={handleClose} maxWidth="xs" fullWidth>
             <DialogTitle>{mode === 'export' ? t('passwordDialog.titleExport') : t('passwordDialog.titleImport')}</DialogTitle>
             <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: 1 }}>
                 <TextField

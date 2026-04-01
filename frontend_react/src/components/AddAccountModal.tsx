@@ -128,7 +128,7 @@ export default function AddAccountModal({ open, onClose, onAccountAdded, initial
             const url = new URL(data);
             const params = new URLSearchParams(url.search);
             const secret = params.get('secret');
-            const issuer = params.get('issuer') || t('accountCard.unknownIssuer');
+            const issuer = params.get('issuer') || '';
             const pathname = decodeURIComponent(url.pathname);
             // Clean up name
             const name = pathname.split(':').pop() || pathname.replace('/', '');
