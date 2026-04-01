@@ -14,11 +14,18 @@ pub enum TotpError {
 /// 2. Converting to uppercase
 /// This mirrors pyotp's lenient behavior — no strict padding required.
 fn normalize_secret(secret: &str) -> String {
-    secret
+    let mut normalized: String = secret
         .chars()
         .filter(|c| c.is_ascii_alphanumeric() || *c == '=')
         .collect::<String>()
-        .to_uppercase()
+        .to_uppercase();
+        
+    // Trim trailing '=' padding completely
+    while normalized.ends_with('=') {
+        normalized.pop();
+    }
+    
+    normalized
 }
 
 /// Create a TOTP instance from a raw secret string.
@@ -105,9 +112,25 @@ mod tests {
 
     #[test]
     fn test_normalize_secret_preserves_equals() {
-        // Padding chars should be kept
+        // Padding chars should be kept if they are somehow inner (though invalid Base32)
+        // or stripped if trailing. Based on the fix, trailing '=' is fully removed.
         let result = normalize_secret("ABCDEFGH========");
-        assert_eq!(result, "ABCDEFGH========");
+        assert_eq!(result, "ABCDEFGH");
+    }
+
+    #[test]
+    fn test_normalize_secret_strips_padding() {
+        // Trailing padding must be stripped for Alphabet::Rfc4648 { padding: false }
+        let result = normalize_secret("JBSWY3DPEHPK3PXP====");
+        assert_eq!(result, "JBSWY3DPEHPK3PXP");
+    }
+
+    #[test]
+    fn test_generate_totp_padded_secret() {
+        // Real-world padded secret shouldn't fail on decoding.
+        // It has padding, so it is larger than the 6-digit generation
+        let code = generate_totp("JBSWY3DPEHPK3PXP====").unwrap();
+        assert_eq!(code.len(), 6);
     }
 
     #[test]
