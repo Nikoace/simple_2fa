@@ -19,12 +19,12 @@ fn normalize_secret(secret: &str) -> String {
         .filter(|c| c.is_ascii_alphanumeric() || *c == '=')
         .collect::<String>()
         .to_uppercase();
-        
+
     // Trim trailing '=' padding completely
     while normalized.ends_with('=') {
         normalized.pop();
     }
-    
+
     normalized
 }
 

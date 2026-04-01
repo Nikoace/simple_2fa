@@ -60,7 +60,7 @@ export default function AccountCard({ account, onDelete, onEdit, onRefresh }: Ac
                         </Typography>
                     </Box>
                     <Box textAlign="right">
-                        <Typography variant="h4" color={isDanger ? 'error' : 'primary'} sx={{ fontFamily: 'monospace', letterSpacing: 2, fontWeight: 'bold' }}>
+                        <Typography variant="h4" color={isDanger ? 'error' : 'primary'} sx={{ fontFamily: '"JetBrains Mono", monospace', letterSpacing: 2, fontWeight: 'bold' }}>
                             {code}
                             <Tooltip title="Copy Code">
                                 <IconButton onClick={handleCopy} size="small" sx={{ ml: 1 }}>

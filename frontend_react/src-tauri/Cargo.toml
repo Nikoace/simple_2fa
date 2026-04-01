@@ -1,6 +1,6 @@
 [package]
 name = "simple-2fa"
-version = "0.1.0"
+version = "0.2.0"
 description = "Simple 2FA Authenticator - Tauri Desktop App"
 authors = ["niko"]
 license = "MIT"
@@ -24,6 +24,10 @@ rusqlite = { version = "0.34", features = ["bundled"] }
 totp-rs = { version = "5.7", features = ["otpauth", "serde"] }
 thiserror = "2"
 base32 = "0.5"
+aes-gcm = "0.10"
+argon2 = "0.5"
+rand = "0.8"
+tauri-plugin-dialog = "2"
 
 [dev-dependencies]
 tempfile = "3"
