@@ -1,0 +1,86 @@
+{
+  "app": {
+    "title": "認証アプリ",
+    "addAccount": "アカウント追加",
+    "import": "インポート",
+    "export": "エクスポート",
+    "language": "言語",
+    "exportSelectTitle": "エクスポートするアカウントを選択",
+    "importSelectTitle": "インポートするアカウントを選択",
+    "nextStep": "次へ",
+    "importAction": "インポート",
+    "duplicateHandling": "重複アカウントの処理",
+    "duplicateSkip": "スキップ",
+    "duplicateOverwrite": "上書き",
+    "deleteDialogTitle": "アカウントを削除しますか？",
+    "deleteDialogPrefix": "次のアカウントを削除してもよろしいですか",
+    "deleteDialogSuffix": "この操作は元に戻せません。",
+    "cancel": "キャンセル",
+    "delete": "削除",
+    "snackbar": {
+      "accountDeleted": "アカウントを削除しました",
+      "accountUpdated": "アカウントを更新しました",
+      "accountAdded": "アカウントを追加しました",
+      "exportSuccess": "{{count}} 件のアカウントをエクスポートしました",
+      "importSummary": "インポート完了: 追加 {{imported}}、スキップ {{skipped}}、上書き {{overwritten}}",
+      "importSummaryWithErrors": "{{summary}}、エラー {{errors}} 件"
+    }
+  },
+  "accountList": {
+    "empty": "まだアカウントがありません。追加してください。"
+  },
+  "accountCard": {
+    "unknownIssuer": "不明",
+    "copyCode": "コードをコピー",
+    "edit": "編集",
+    "delete": "削除"
+  },
+  "addModal": {
+    "titleAdd": "新しいアカウントを追加",
+    "titleEdit": "アカウントを編集",
+    "tabScan": "QRスキャン",
+    "tabEditDetails": "詳細を編集",
+    "tabManual": "手動入力",
+    "statusSelectScreen": "QRコードが表示されているウィンドウ/画面を選択してください...",
+    "statusQrScanned": "QRコードを読み取りました。以下で内容を編集できます。",
+    "scanInstruction": "画面上のQRコードをスキャンします。",
+    "scanning": "スキャン中...",
+    "captureScreen": "画面をキャプチャ",
+    "issuerLabel": "発行元（サービス名）",
+    "accountNameLabel": "アカウント名（メール/ユーザー名）",
+    "secretKeyLabel": "シークレットキー",
+    "secretHelper": "Base32 文字列",
+    "save": "保存",
+    "cancel": "キャンセル",
+    "errors": {
+      "canvas": "キャンバスコンテキストを取得できませんでした",
+      "noQr": "選択範囲でQRコードが見つかりませんでした。",
+      "captureFailed": "キャプチャがキャンセルまたは失敗しました: {{message}}",
+      "invalidOtpUrl": "有効な OTP URL ではありません",
+      "noSecret": "シークレットが見つかりません",
+      "nameSecretRequired": "名前とシークレットは必須です。"
+    }
+  },
+  "passwordDialog": {
+    "titleExport": "バックアップをエクスポート",
+    "titleImport": "バックアップをインポート",
+    "passwordLabel": "暗号化パスワード",
+    "confirmPasswordLabel": "パスワード確認",
+    "helperExport": "バックアップファイルの暗号化パスワードを設定してください",
+    "helperImport": "バックアップファイルのパスワードを入力してください",
+    "cancel": "キャンセル",
+    "next": "次へ",
+    "decrypt": "復号",
+    "errors": {
+      "required": "パスワードを入力してください",
+      "mismatch": "パスワードが一致しません"
+    }
+  },
+  "accountSelect": {
+    "selectAll": "すべて選択",
+    "unselectAll": "すべて解除",
+    "noIssuer": "（発行元なし）",
+    "cancel": "キャンセル",
+    "confirmWithCount": "{{label}}（{{count}} 件）"
+  }
+}
