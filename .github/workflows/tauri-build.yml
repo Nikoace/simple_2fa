@@ -11,7 +11,7 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4.2.2
 
       - name: Install system dependencies (Linux)
         run: |
@@ -34,7 +34,7 @@ jobs:
         uses: oven-sh/setup-bun@v2
 
       - name: Cache Bun dependencies
-        uses: actions/cache@v4
+        uses: actions/cache@v4.2.3
         with:
           path: ~/.bun/install/cache
           key: ${{ runner.os }}-bun-${{ hashFiles('frontend_react/bun.lockb', 'frontend_react/bun.lock') }}
@@ -51,7 +51,7 @@ jobs:
     needs: test
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4.2.2
 
       - name: Install system dependencies
         run: |
@@ -70,7 +70,7 @@ jobs:
         uses: oven-sh/setup-bun@v2
 
       - name: Cache Bun dependencies
-        uses: actions/cache@v4
+        uses: actions/cache@v4.2.3
         with:
           path: ~/.bun/install/cache
           key: ${{ runner.os }}-bun-${{ hashFiles('frontend_react/bun.lockb', 'frontend_react/bun.lock') }}
@@ -84,7 +84,7 @@ jobs:
         run: bunx tauri build
 
       - name: Upload Linux artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v4.6.2
         with:
           name: simple-2fa-linux
           path: frontend_react/src-tauri/target/release/bundle/**/*
@@ -93,7 +93,7 @@ jobs:
     needs: test
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4.2.2
 
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
@@ -107,7 +107,7 @@ jobs:
         uses: oven-sh/setup-bun@v2
 
       - name: Cache Bun dependencies
-        uses: actions/cache@v4
+        uses: actions/cache@v4.2.3
         with:
           path: ~/.bun/install/cache
           key: ${{ runner.os }}-bun-${{ hashFiles('frontend_react/bun.lockb', 'frontend_react/bun.lock') }}
@@ -139,7 +139,7 @@ jobs:
         run: bunx tauri build
 
       - name: Upload Windows artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v4.6.2
         with:
           name: simple-2fa-windows
           path: frontend_react/src-tauri/target/release/bundle/**/*
