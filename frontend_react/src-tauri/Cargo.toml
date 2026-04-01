@@ -1,6 +1,6 @@
 [package]
 name = "simple-2fa"
-version = "0.2.0"
+version = "0.3.0"
 description = "Simple 2FA Authenticator - Tauri Desktop App"
 authors = ["niko"]
 license = "MIT"
