@@ -1,4 +1,5 @@
 mod commands;
+mod crypto;
 mod db;
 mod totp;
 
@@ -35,11 +36,15 @@ pub fn run() {
 
             Ok(())
         })
+        .plugin(tauri_plugin_dialog::init())
         .invoke_handler(tauri::generate_handler![
             commands::get_accounts,
             commands::add_account,
             commands::update_account,
-            commands::delete_account
+            commands::delete_account,
+            commands::export_accounts,
+            commands::preview_import,
+            commands::import_accounts
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

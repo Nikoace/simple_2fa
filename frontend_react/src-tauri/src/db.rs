@@ -2,6 +2,7 @@ use rusqlite::{params, Connection};
 use serde::Serialize;
 use std::path::Path;
 
+use crate::crypto::ExportAccount;
 use crate::totp::{generate_totp, get_ttl, validate_secret, TotpError};
 
 /// Database-level account representation (includes secret).
@@ -189,6 +190,73 @@ pub fn update_account(
     Ok(account)
 }
 
+/// 导出所有账户（含密钥），仅用于加密备份，绝不直接发送到前端
+pub fn list_accounts_for_export(conn: &Connection) -> Result<Vec<ExportAccount>, DbError> {
+    let mut stmt = conn.prepare("SELECT name, issuer, secret FROM account")?;
+    let accounts = stmt
+        .query_map([], |row| {
+            Ok(ExportAccount {
+                name: row.get(0)?,
+                issuer: row.get(1)?,
+                secret: row.get(2)?,
+            })
+        })?
+        .collect::<Result<Vec<_>, _>>()?;
+    Ok(accounts)
+}
+
+/// 按 ID 列表导出指定账户（含密钥），IDs 为空时返回空列表
+pub fn list_accounts_by_ids(conn: &Connection, ids: &[i64]) -> Result<Vec<ExportAccount>, DbError> {
+    if ids.is_empty() {
+        return Ok(Vec::new());
+    }
+    // 动态构建 IN (?, ?, ...) 占位符
+    let placeholders = (1..=ids.len())
+        .map(|i| format!("?{}", i))
+        .collect::<Vec<_>>()
+        .join(", ");
+    let sql = format!(
+        "SELECT name, issuer, secret FROM account WHERE id IN ({}) ORDER BY id",
+        placeholders
+    );
+    let mut stmt = conn.prepare(&sql)?;
+    let accounts = stmt
+        .query_map(rusqlite::params_from_iter(ids.iter()), |row| {
+            Ok(ExportAccount {
+                name: row.get(0)?,
+                issuer: row.get(1)?,
+                secret: row.get(2)?,
+            })
+        })?
+        .collect::<Result<Vec<_>, _>>()?;
+    Ok(accounts)
+}
+
+/// 查找指定 name + issuer 的账户 ID，用于导入时检测重复
+pub fn find_account_by_name_issuer(
+    conn: &Connection,
+    name: &str,
+    issuer: Option<&str>,
+) -> Result<Option<i64>, DbError> {
+    let result = match issuer {
+        Some(iss) => conn.query_row(
+            "SELECT id FROM account WHERE name = ?1 AND issuer = ?2",
+            params![name, iss],
+            |row| row.get(0),
+        ),
+        None => conn.query_row(
+            "SELECT id FROM account WHERE name = ?1 AND issuer IS NULL",
+            params![name],
+            |row| row.get(0),
+        ),
+    };
+    match result {
+        Ok(id) => Ok(Some(id)),
+        Err(rusqlite::Error::QueryReturnedNoRows) => Ok(None),
+        Err(e) => Err(DbError::Sqlite(e)),
+    }
+}
+
 /// Delete an account by ID.
 pub fn delete_account(conn: &Connection, id: i64) -> Result<(), DbError> {
     let affected = conn.execute("DELETE FROM account WHERE id = ?1", params![id])?;
@@ -317,5 +385,105 @@ mod tests {
         }
         let accounts = list_accounts_with_codes(&conn).unwrap();
         assert_eq!(accounts.len(), 5);
+    }
+
+    #[test]
+    fn test_list_accounts_for_export_includes_secrets() {
+        let conn = setup_db();
+        create_account(&conn, "alice", Some("GitHub"), VALID_SECRET).unwrap();
+        create_account(&conn, "bob", None, VALID_SECRET).unwrap();
+
+        let exported = list_accounts_for_export(&conn).unwrap();
+        assert_eq!(exported.len(), 2);
+        assert_eq!(exported[0].name, "alice");
+        assert_eq!(exported[0].issuer, Some("GitHub".to_string()));
+        assert_eq!(exported[0].secret, VALID_SECRET);
+        assert_eq!(exported[1].name, "bob");
+        assert!(exported[1].issuer.is_none());
+    }
+
+    #[test]
+    fn test_list_accounts_for_export_empty() {
+        let conn = setup_db();
+        let exported = list_accounts_for_export(&conn).unwrap();
+        assert!(exported.is_empty());
+    }
+
+    #[test]
+    fn test_find_account_by_name_issuer_found() {
+        let conn = setup_db();
+        let created = create_account(&conn, "alice", Some("GitHub"), VALID_SECRET).unwrap();
+
+        let result = find_account_by_name_issuer(&conn, "alice", Some("GitHub")).unwrap();
+        assert_eq!(result, Some(created.id));
+    }
+
+    #[test]
+    fn test_find_account_by_name_issuer_not_found() {
+        let conn = setup_db();
+        create_account(&conn, "alice", Some("GitHub"), VALID_SECRET).unwrap();
+
+        let result = find_account_by_name_issuer(&conn, "bob", Some("GitHub")).unwrap();
+        assert!(result.is_none());
+    }
+
+    #[test]
+    fn test_list_accounts_by_ids_returns_subset() {
+        let conn = setup_db();
+        let a = create_account(&conn, "alice", Some("GitHub"), VALID_SECRET).unwrap();
+        let _b = create_account(&conn, "bob", None, VALID_SECRET).unwrap();
+        let c = create_account(&conn, "carol", Some("GitLab"), VALID_SECRET).unwrap();
+
+        let result = list_accounts_by_ids(&conn, &[a.id, c.id]).unwrap();
+        assert_eq!(result.len(), 2);
+        assert_eq!(result[0].name, "alice");
+        assert_eq!(result[1].name, "carol");
+    }
+
+    #[test]
+    fn test_list_accounts_by_ids_empty_returns_empty() {
+        let conn = setup_db();
+        create_account(&conn, "alice", Some("GitHub"), VALID_SECRET).unwrap();
+        let result = list_accounts_by_ids(&conn, &[]).unwrap();
+        assert!(result.is_empty());
+    }
+
+    #[test]
+    fn test_list_accounts_by_ids_all_ids() {
+        let conn = setup_db();
+        let a = create_account(&conn, "alice", Some("GitHub"), VALID_SECRET).unwrap();
+        let b = create_account(&conn, "bob", None, VALID_SECRET).unwrap();
+        let result = list_accounts_by_ids(&conn, &[a.id, b.id]).unwrap();
+        assert_eq!(result.len(), 2);
+    }
+
+    #[test]
+    fn test_list_accounts_by_ids_nonexistent_silently_omitted() {
+        let conn = setup_db();
+        let a = create_account(&conn, "alice", Some("GitHub"), VALID_SECRET).unwrap();
+        let result = list_accounts_by_ids(&conn, &[a.id, 9999]).unwrap();
+        assert_eq!(result.len(), 1);
+        assert_eq!(result[0].name, "alice");
+    }
+
+    #[test]
+    fn test_list_accounts_by_ids_preserves_secret() {
+        let conn = setup_db();
+        let a = create_account(&conn, "alice", Some("GitHub"), VALID_SECRET).unwrap();
+        let result = list_accounts_by_ids(&conn, &[a.id]).unwrap();
+        assert_eq!(result[0].secret, VALID_SECRET);
+    }
+
+    #[test]
+    fn test_find_account_by_name_issuer_none_issuer() {
+        let conn = setup_db();
+        let created = create_account(&conn, "alice", None, VALID_SECRET).unwrap();
+
+        let found = find_account_by_name_issuer(&conn, "alice", None).unwrap();
+        assert_eq!(found, Some(created.id));
+
+        // issuer=Some("X") 不匹配 issuer=NULL
+        let not_found = find_account_by_name_issuer(&conn, "alice", Some("X")).unwrap();
+        assert!(not_found.is_none());
     }
 }
