@@ -105,9 +105,9 @@ function App() {
 
   // Step 3: user entered password → pick file and export
   const handleExportPasswordConfirm = async (password: string) => {
-    const filePath = await pickExportPath()
-    if (!filePath) return
     try {
+      const filePath = await pickExportPath()
+      if (!filePath) return
       const count = await exportAccounts(password, filePath, selectedExportIds)
       showSnackbar(`成功导出 ${count} 个账户`)
     } catch (error) {
@@ -118,10 +118,14 @@ function App() {
   // --- Import flow ---
   // Step 1: pick file → open password dialog
   const handleImportClick = async () => {
-    const filePath = await pickImportPath()
-    if (!filePath) return
-    setPendingImportPath(filePath)
-    setImportPasswordOpen(true)
+    try {
+      const filePath = await pickImportPath()
+      if (!filePath) return
+      setPendingImportPath(filePath)
+      setImportPasswordOpen(true)
+    } catch (error) {
+      showSnackbar(String(error), 'error')
+    }
   }
 
   // Step 2: user entered password → decrypt preview → open selection dialog

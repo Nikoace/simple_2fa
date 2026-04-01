@@ -343,13 +343,19 @@ mod tests {
 
     #[test]
     fn test_export_with_empty_ids_exports_all() {
-        // 用 crypto 直接验证：空 ids 时应导出全部
-        let accounts = sample_accounts();
-        let file = NamedTempFile::with_suffix(".s2fa").unwrap();
-        let encrypted = encrypt_accounts(&accounts, "pw").unwrap();
-        std::fs::write(file.path(), &encrypted).unwrap();
+        // 验证 account_ids 为空时，export_accounts 走 list_accounts_for_export 路径（导出全部）
+        let conn = init_db_memory().unwrap();
+        for a in sample_accounts() {
+            crate::db::create_account(&conn, &a.name, a.issuer.as_deref(), &a.secret).unwrap();
+        }
+        // 空 ids → 调用 list_accounts_for_export
+        let exported = crate::db::list_accounts_for_export(&conn).unwrap();
+        assert_eq!(exported.len(), 3);
 
-        // 解密确认 3 个账户
+        // 加密并写入文件，再解密校验数量一致
+        let file = NamedTempFile::with_suffix(".s2fa").unwrap();
+        let encrypted = encrypt_accounts(&exported, "pw").unwrap();
+        std::fs::write(file.path(), &encrypted).unwrap();
         let data = std::fs::read(file.path()).unwrap();
         let decrypted = crate::crypto::decrypt_accounts(&data, "pw").unwrap();
         assert_eq!(decrypted.len(), 3);

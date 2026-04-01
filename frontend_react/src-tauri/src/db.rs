@@ -157,21 +157,29 @@ pub fn update_account(
         validate_secret(s)?;
     }
 
-    // Build dynamic update
+    // Build a single atomic UPDATE containing only the provided fields
+    let mut set_clauses: Vec<String> = Vec::new();
+    let mut bindings: Vec<Box<dyn rusqlite::ToSql>> = Vec::new();
     if let Some(n) = name {
-        conn.execute("UPDATE account SET name = ?1 WHERE id = ?2", params![n, id])?;
+        set_clauses.push(format!("name = ?{}", bindings.len() + 1));
+        bindings.push(Box::new(n.to_string()));
     }
     if let Some(i) = issuer {
-        conn.execute(
-            "UPDATE account SET issuer = ?1 WHERE id = ?2",
-            params![i, id],
-        )?;
+        set_clauses.push(format!("issuer = ?{}", bindings.len() + 1));
+        bindings.push(Box::new(i.to_string()));
     }
     if let Some(s) = secret {
-        conn.execute(
-            "UPDATE account SET secret = ?1 WHERE id = ?2",
-            params![s, id],
-        )?;
+        set_clauses.push(format!("secret = ?{}", bindings.len() + 1));
+        bindings.push(Box::new(s.to_string()));
+    }
+    if !set_clauses.is_empty() {
+        let sql = format!(
+            "UPDATE account SET {} WHERE id = ?{}",
+            set_clauses.join(", "),
+            bindings.len() + 1
+        );
+        bindings.push(Box::new(id));
+        conn.execute(&sql, rusqlite::params_from_iter(bindings.iter()))?;
     }
 
     // Return updated account
