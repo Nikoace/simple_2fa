@@ -6,6 +6,8 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "lint": "eslint .",
     "preview": "vite preview",
     "tauri": "tauri"
@@ -23,7 +25,6 @@
     "@tauri-apps/plugin-dialog": "^2.6.0",
     "i18next": "^26.0.3",
     "jsqr": "^1.4.0",
-    "otpauth": "^9.4.1",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "react-i18next": "^17.0.2"
