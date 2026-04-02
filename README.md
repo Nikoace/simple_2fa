@@ -93,7 +93,6 @@ simple_2fa/
 │           ├── db.rs                 # SQLite 数据库层
 │           ├── totp.rs               # TOTP 生成
 │           └── crypto.rs             # AES-256-GCM 加密/解密
-├── backup/                           # 旧版 Python 后端（仅参考）
 └── README.md
 ```
 

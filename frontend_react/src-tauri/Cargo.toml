@@ -21,13 +21,20 @@ log = "0.4"
 tauri = { version = "2.10.3", features = [] }
 tauri-plugin-log = "2"
 rusqlite = { version = "0.34", features = ["bundled"] }
-totp-rs = { version = "5.7", features = ["otpauth", "serde"] }
+totp-rs = { version = "5.7", default-features = false }
 thiserror = "2"
 base32 = "0.5"
 aes-gcm = "0.10"
 argon2 = "0.5"
 rand = "0.8"
 tauri-plugin-dialog = "2"
+
+[profile.release]
+strip = true
+lto = true
+opt-level = "s"
+codegen-units = 1
+panic = "abort"
 
 [dev-dependencies]
 tempfile = "3"

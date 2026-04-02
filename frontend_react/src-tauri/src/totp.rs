@@ -43,36 +43,33 @@ fn create_totp(secret: &str) -> Result<TOTP, TotpError> {
         return Err(TotpError::InvalidSecret("Secret is empty".to_string()));
     }
 
-    Ok(TOTP::new_unchecked(
-        Algorithm::SHA1,
-        6,
-        1,
-        30,
-        secret_bytes,
-        None,          // issuer
-        String::new(), // account_name
-    ))
+    Ok(TOTP::new_unchecked(Algorithm::SHA1, 6, 1, 30, secret_bytes))
 }
 
 /// Generate a 6-digit TOTP code for the given secret.
+#[allow(dead_code)]
 pub fn generate_totp(secret: &str) -> Result<String, TotpError> {
-    let totp = create_totp(secret)?;
-    let time = std::time::SystemTime::now()
-        .duration_since(std::time::UNIX_EPOCH)
-        .map_err(|e| TotpError::GenerationFailed(e.to_string()))?
-        .as_secs();
-    Ok(totp.generate(time))
+    let (code, _) = generate_totp_with_ttl(secret)?;
+    Ok(code)
 }
 
 /// Get the remaining seconds until the current TOTP code expires.
+#[allow(dead_code)]
 pub fn get_ttl(secret: &str) -> Result<u64, TotpError> {
+    let (_, ttl) = generate_totp_with_ttl(secret)?;
+    Ok(ttl)
+}
+
+/// Generate a TOTP code and its TTL in one pass (avoids double decode + syscall).
+pub fn generate_totp_with_ttl(secret: &str) -> Result<(String, u64), TotpError> {
     let totp = create_totp(secret)?;
     let time = std::time::SystemTime::now()
         .duration_since(std::time::UNIX_EPOCH)
         .map_err(|e| TotpError::GenerationFailed(e.to_string()))?
         .as_secs();
-    // TTL = period - (current_time % period)
-    Ok(totp.step - (time % totp.step))
+    let code = totp.generate(time);
+    let ttl = totp.step - (time % totp.step);
+    Ok((code, ttl))
 }
 
 /// Validate that a secret can successfully generate TOTP codes.

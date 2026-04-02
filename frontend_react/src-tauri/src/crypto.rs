@@ -29,8 +29,6 @@ pub enum CryptoError {
     DecryptionFailed,
     #[error("无效的文件格式")]
     InvalidFormat,
-    #[error("IO 错误: {0}")]
-    Io(#[from] std::io::Error),
     #[error("序列化错误: {0}")]
     Serialization(#[from] serde_json::Error),
     #[error("密钥派生错误")]

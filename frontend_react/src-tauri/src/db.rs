@@ -3,7 +3,7 @@ use serde::Serialize;
 use std::path::Path;
 
 use crate::crypto::ExportAccount;
-use crate::totp::{generate_totp, get_ttl, validate_secret, TotpError};
+use crate::totp::{generate_totp_with_ttl, validate_secret, TotpError};
 
 /// Database-level account representation (includes secret).
 #[derive(Debug, Clone)]
@@ -43,17 +43,17 @@ pub enum DbError {
     InvalidSecret(#[from] TotpError),
 }
 
+const SCHEMA: &str = "CREATE TABLE IF NOT EXISTS account (
+    id    INTEGER PRIMARY KEY AUTOINCREMENT,
+    name  TEXT NOT NULL,
+    issuer TEXT,
+    secret TEXT NOT NULL
+);";
+
 /// Initialize the database, creating the accounts table if it doesn't exist.
 pub fn init_db(db_path: &Path) -> Result<Connection, DbError> {
     let conn = Connection::open(db_path)?;
-    conn.execute_batch(
-        "CREATE TABLE IF NOT EXISTS account (
-            id    INTEGER PRIMARY KEY AUTOINCREMENT,
-            name  TEXT NOT NULL,
-            issuer TEXT,
-            secret TEXT NOT NULL
-        );",
-    )?;
+    conn.execute_batch(SCHEMA)?;
     Ok(conn)
 }
 
@@ -61,14 +61,7 @@ pub fn init_db(db_path: &Path) -> Result<Connection, DbError> {
 #[cfg(test)]
 pub fn init_db_memory() -> Result<Connection, DbError> {
     let conn = Connection::open_in_memory()?;
-    conn.execute_batch(
-        "CREATE TABLE IF NOT EXISTS account (
-            id    INTEGER PRIMARY KEY AUTOINCREMENT,
-            name  TEXT NOT NULL,
-            issuer TEXT,
-            secret TEXT NOT NULL
-        );",
-    )?;
+    conn.execute_batch(SCHEMA)?;
     Ok(conn)
 }
 
@@ -89,8 +82,8 @@ pub fn list_accounts_with_codes(conn: &Connection) -> Result<Vec<AccountWithCode
     for account in accounts {
         let account = account?;
         // Skip accounts with invalid secrets (log would be nice here)
-        match (generate_totp(&account.secret), get_ttl(&account.secret)) {
-            (Ok(code), Ok(ttl)) => {
+        match generate_totp_with_ttl(&account.secret) {
+            Ok((code, ttl)) => {
                 results.push(AccountWithCode {
                     id: account.id,
                     name: account.name,
@@ -99,7 +92,7 @@ pub fn list_accounts_with_codes(conn: &Connection) -> Result<Vec<AccountWithCode
                     ttl,
                 });
             }
-            _ => {
+            Err(_) => {
                 log::error!(
                     "Error generating TOTP for account {} ({})",
                     account.id,

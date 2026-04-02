@@ -20,6 +20,9 @@ export default defineConfig({
       : undefined,
   },
   envPrefix: ['VITE_', 'TAURI_'],
+  build: {
+    target: 'esnext',
+  },
   test: {
     globals: true,
     environment: 'jsdom',

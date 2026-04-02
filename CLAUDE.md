@@ -38,7 +38,6 @@ simple_2fa/
 │   │   └── tauri.conf.json
 │   ├── package.json
 │   └── vite.config.ts
-├── backup/                  # (レガシー) Python バックエンド ও Docker 関連 — 参照のみ
 └── CLAUDE.md                # このファイル
 ```
 
