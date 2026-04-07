@@ -9,6 +9,7 @@
     "importSelectTitle": "Select accounts to import",
     "nextStep": "Next",
     "importAction": "Import",
+    "launchAtStartup": "Launch at startup",
     "duplicateHandling": "Duplicate account handling",
     "duplicateSkip": "Skip",
     "duplicateOverwrite": "Overwrite",
@@ -21,6 +22,8 @@
       "accountDeleted": "Account deleted successfully",
       "accountUpdated": "Account updated",
       "accountAdded": "Account added",
+      "autostartEnabled": "Launch at startup enabled",
+      "autostartDisabled": "Launch at startup disabled",
       "exportSuccess": "Exported {{count}} account(s) successfully",
       "importSummary": "Import completed: added {{imported}}, skipped {{skipped}}, overwritten {{overwritten}}",
       "importSummaryWithErrors": "{{summary}}, {{errors}} error(s)"

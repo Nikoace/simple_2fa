@@ -1,13 +1,34 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { getAccounts, addAccount, updateAccount, deleteAccount } from '../tauriApi';
+import {
+    getAccounts,
+    addAccount,
+    updateAccount,
+    deleteAccount,
+    getAutostartEnabled,
+    setAutostartEnabled,
+} from '../tauriApi';
 
 // Mock @tauri-apps/api/core
 vi.mock('@tauri-apps/api/core', () => ({
     invoke: vi.fn(),
 }));
 
+vi.mock('@tauri-apps/plugin-autostart', () => ({
+    enable: vi.fn(),
+    disable: vi.fn(),
+    isEnabled: vi.fn(),
+}));
+
 import { invoke } from '@tauri-apps/api/core';
+import {
+    enable as enableAutostart,
+    disable as disableAutostart,
+    isEnabled as isAutostartEnabled,
+} from '@tauri-apps/plugin-autostart';
 const mockInvoke = vi.mocked(invoke);
+const mockEnableAutostart = vi.mocked(enableAutostart);
+const mockDisableAutostart = vi.mocked(disableAutostart);
+const mockIsAutostartEnabled = vi.mocked(isAutostartEnabled);
 
 describe('tauriApi', () => {
     beforeEach(() => {
@@ -117,6 +138,35 @@ describe('tauriApi', () => {
             mockInvoke.mockRejectedValue('Account not found: id=999');
 
             await expect(deleteAccount(999)).rejects.toBe('Account not found: id=999');
+        });
+    });
+
+    describe('autostart', () => {
+        it('should return autostart status', async () => {
+            mockIsAutostartEnabled.mockResolvedValue(true);
+
+            const result = await getAutostartEnabled();
+
+            expect(mockIsAutostartEnabled).toHaveBeenCalledOnce();
+            expect(result).toBe(true);
+        });
+
+        it('should enable autostart when set to true', async () => {
+            mockEnableAutostart.mockResolvedValue(undefined);
+
+            await setAutostartEnabled(true);
+
+            expect(mockEnableAutostart).toHaveBeenCalledOnce();
+            expect(mockDisableAutostart).not.toHaveBeenCalled();
+        });
+
+        it('should disable autostart when set to false', async () => {
+            mockDisableAutostart.mockResolvedValue(undefined);
+
+            await setAutostartEnabled(false);
+
+            expect(mockDisableAutostart).toHaveBeenCalledOnce();
+            expect(mockEnableAutostart).not.toHaveBeenCalled();
         });
     });
 });

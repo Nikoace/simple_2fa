@@ -61,6 +61,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ needs.release-please.outputs.tag_name }}
+          fail_on_unmatched_files: false
           files: |
             frontend_react/src-tauri/target/release/bundle/deb/*.deb
             frontend_react/src-tauri/target/release/bundle/appimage/*.AppImage
@@ -95,6 +96,7 @@ jobs:
         run: bun install
 
       - name: Import Windows signing certificate
+        if: ${{ secrets.WINDOWS_CERTIFICATE != '' && secrets.WINDOWS_CERTIFICATE_PASSWORD != '' }}
         env:
           WINDOWS_CERTIFICATE: ${{ secrets.WINDOWS_CERTIFICATE }}
           WINDOWS_CERTIFICATE_PASSWORD: ${{ secrets.WINDOWS_CERTIFICATE_PASSWORD }}
@@ -110,16 +112,23 @@ jobs:
         shell: pwsh
 
       - name: Build Tauri (Windows)
+        if: ${{ secrets.WINDOWS_CERTIFICATE != '' && secrets.WINDOWS_CERTIFICATE_PASSWORD != '' }}
         working-directory: frontend_react
         env:
           TAURI_CONFIG: >-
             {"bundle":{"windows":{"certificateThumbprint":"${{ env.CERTIFICATE_THUMBPRINT }}","digestAlgorithm":"sha256","timestampUrl":"http://timestamp.digicert.com"}}}
         run: bunx tauri build
 
+      - name: Build Tauri (Windows, unsigned)
+        if: ${{ secrets.WINDOWS_CERTIFICATE == '' || secrets.WINDOWS_CERTIFICATE_PASSWORD == '' }}
+        working-directory: frontend_react
+        run: bunx tauri build
+
       - name: Upload to GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ needs.release-please.outputs.tag_name }}
+          fail_on_unmatched_files: false
           files: |
             frontend_react/src-tauri/target/release/bundle/msi/*.msi
             frontend_react/src-tauri/target/release/bundle/nsis/*.exe

@@ -1,5 +1,10 @@
 import { invoke } from '@tauri-apps/api/core';
 import { save, open } from '@tauri-apps/plugin-dialog';
+import {
+    enable as enableAutostart,
+    disable as disableAutostart,
+    isEnabled as isAutostartEnabled,
+} from '@tauri-apps/plugin-autostart';
 import type { Account, DuplicateStrategy, ImportPreviewAccount, ImportResult } from './types';
 export type { ImportPreviewAccount } from './types';
 
@@ -106,4 +111,18 @@ export async function pickImportPath(): Promise<string | null> {
         multiple: false,
     });
     return typeof result === 'string' ? result : null;
+}
+
+/** Returns whether auto-start on boot is currently enabled. */
+export async function getAutostartEnabled(): Promise<boolean> {
+    return isAutostartEnabled();
+}
+
+/** Enables or disables auto-start on boot. */
+export async function setAutostartEnabled(enabled: boolean): Promise<void> {
+    if (enabled) {
+        await enableAutostart();
+        return;
+    }
+    await disableAutostart();
 }

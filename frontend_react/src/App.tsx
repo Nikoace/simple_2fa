@@ -4,7 +4,7 @@ import {
   Dialog, DialogTitle, DialogContent, DialogActions, DialogContentText,
   FormControl, MenuItem, Select,
   SelectChangeEvent,
-  FormControlLabel, FormLabel, Radio, RadioGroup,
+  FormControlLabel, FormLabel, Radio, RadioGroup, Switch,
   Snackbar, Alert
 } from '@mui/material'
 import { Add, FileDownload, FileUpload } from '@mui/icons-material'
@@ -18,8 +18,11 @@ import {
   getAccounts, deleteAccount,
   exportAccounts, previewImport, importAccounts,
   pickExportPath, pickImportPath,
+  getAutostartEnabled, setAutostartEnabled as updateAutostartEnabled,
 } from './tauriApi'
 import { supportedLanguages, type SupportedLanguage } from './i18n'
+
+const isWindows = typeof navigator !== 'undefined' && navigator.userAgent.includes('Windows')
 
 function App() {
   const { t, i18n } = useTranslation()
@@ -48,14 +51,16 @@ function App() {
   const [pendingImportPassword, setPendingImportPassword] = useState<string>('')
   const [importPreviewAccounts, setImportPreviewAccounts] = useState<ImportPreviewAccount[]>([])
   const [importStrategy, setImportStrategy] = useState<DuplicateStrategy>('Skip')
+  const [autostartEnabled, setAutostartEnabled] = useState(false)
+  const [autostartLoading, setAutostartLoading] = useState(false)
 
   const [snackbar, setSnackbar] = useState<{ open: boolean; message: string; severity: 'success' | 'error' }>({
     open: false, message: '', severity: 'success'
   })
 
-  const showSnackbar = (message: string, severity: 'success' | 'error' = 'success') => {
+  const showSnackbar = useCallback((message: string, severity: 'success' | 'error' = 'success') => {
     setSnackbar({ open: true, message, severity })
-  }
+  }, [])
 
   const handleSnackbarClose = () => setSnackbar(s => ({ ...s, open: false }))
 
@@ -114,6 +119,31 @@ function App() {
 
   const onLanguageSelectChange = (event: SelectChangeEvent<SupportedLanguage>) => {
     void handleLanguageChange(event.target.value)
+  }
+
+  const loadAutostartStatus = useCallback(async () => {
+    if (!isWindows) return
+    try {
+      const enabled = await getAutostartEnabled()
+      setAutostartEnabled(enabled)
+    } catch (error) {
+      showSnackbar(String(error), 'error')
+    }
+  }, [showSnackbar])
+
+  const handleAutostartChange = async (enabled: boolean) => {
+    setAutostartLoading(true)
+    try {
+      await updateAutostartEnabled(enabled)
+      setAutostartEnabled(enabled)
+      showSnackbar(
+        enabled ? t('app.snackbar.autostartEnabled') : t('app.snackbar.autostartDisabled')
+      )
+    } catch (error) {
+      showSnackbar(String(error), 'error')
+    } finally {
+      setAutostartLoading(false)
+    }
   }
 
   // --- Export flow ---
@@ -207,9 +237,10 @@ function App() {
 
   useEffect(() => {
     fetchAccounts()
+    void loadAutostartStatus()
     const interval = setInterval(fetchAccounts, 5000)
     return () => clearInterval(interval)
-  }, [fetchAccounts])
+  }, [fetchAccounts, loadAutostartStatus])
 
   return (
     <>
@@ -240,6 +271,23 @@ function App() {
               <MenuItem value="en">English</MenuItem>
               <MenuItem value="ja">日本語</MenuItem>
             </Select>
+            {isWindows && (
+              <FormControlLabel
+                sx={{ mr: 1, color: 'common.white' }}
+                control={(
+                  <Switch
+                    size="small"
+                    color="default"
+                    checked={autostartEnabled}
+                    disabled={autostartLoading}
+                    onChange={(_, checked) => {
+                      void handleAutostartChange(checked)
+                    }}
+                  />
+                )}
+                label={t('app.launchAtStartup')}
+              />
+            )}
             <Button color="inherit" startIcon={<FileUpload />} onClick={handleImportClick}>
               {t('app.import')}
             </Button>

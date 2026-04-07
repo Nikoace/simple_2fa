@@ -9,6 +9,7 @@
     "importSelectTitle": "选择要导入的账户",
     "nextStep": "下一步",
     "importAction": "导入",
+    "launchAtStartup": "开机启动",
     "duplicateHandling": "重复账户处理",
     "duplicateSkip": "跳过",
     "duplicateOverwrite": "覆盖",
@@ -21,6 +22,8 @@
       "accountDeleted": "账户删除成功",
       "accountUpdated": "账户已更新",
       "accountAdded": "账户已添加",
+      "autostartEnabled": "已开启开机启动",
+      "autostartDisabled": "已关闭开机启动",
       "exportSuccess": "成功导出 {{count}} 个账户",
       "importSummary": "导入完成：新增 {{imported}}，跳过 {{skipped}}，覆盖 {{overwritten}}",
       "importSummaryWithErrors": "{{summary}}，{{errors}} 个错误"
