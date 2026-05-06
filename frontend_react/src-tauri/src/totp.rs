@@ -12,6 +12,7 @@ pub enum TotpError {
 /// Normalize a Base32 secret by:
 /// 1. Stripping all non-Base32 characters (whitespace, dashes, etc.)
 /// 2. Converting to uppercase
+///
 /// This mirrors pyotp's lenient behavior — no strict padding required.
 fn normalize_secret(secret: &str) -> String {
     let mut normalized: String = secret
