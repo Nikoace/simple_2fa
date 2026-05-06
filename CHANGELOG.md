@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.6.0](https://github.com/Nikoace/simple_2fa/compare/simple-2fa-v0.5.0...simple-2fa-v0.6.0) (2026-05-06)
+
+
+### Features
+
+* **frontend:** slim down toolbar with icon buttons ([2f443c1](https://github.com/Nikoace/simple_2fa/commit/2f443c1a911340193eaa4b6fcae8698335992c6d))
+
 ## [0.5.0](https://github.com/Nikoace/simple_2fa/compare/simple-2fa-v0.4.0...simple-2fa-v0.5.0) (2026-05-06)
 
 
