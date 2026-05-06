@@ -2,12 +2,12 @@ import { useState, useEffect, useCallback } from 'react'
 import {
   Container, Typography, Box, Button, AppBar, Toolbar, CssBaseline,
   Dialog, DialogTitle, DialogContent, DialogActions, DialogContentText,
-  FormControl, MenuItem, Select,
-  SelectChangeEvent,
+  FormControl, MenuItem,
   FormControlLabel, FormLabel, Radio, RadioGroup, Switch,
-  Snackbar, Alert
+  Snackbar, Alert,
+  IconButton, Tooltip, Menu,
 } from '@mui/material'
-import { Add, FileDownload, FileUpload } from '@mui/icons-material'
+import { Add, FileDownload, FileUpload, Language } from '@mui/icons-material'
 import { useTranslation } from 'react-i18next'
 import AccountList from './components/AccountList'
 import AddAccountModal from './components/AddAccountModal'
@@ -34,6 +34,7 @@ function App() {
       ? i18n.resolvedLanguage
       : 'zh-CN') as SupportedLanguage
   )
+  const [langMenuAnchor, setLangMenuAnchor] = useState<null | HTMLElement>(null)
 
   // Delete
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
@@ -114,11 +115,8 @@ function App() {
 
   const handleLanguageChange = async (newLanguage: SupportedLanguage) => {
     setLanguage(newLanguage)
+    setLangMenuAnchor(null)
     await i18n.changeLanguage(newLanguage)
-  }
-
-  const onLanguageSelectChange = (event: SelectChangeEvent<SupportedLanguage>) => {
-    void handleLanguageChange(event.target.value)
   }
 
   const loadAutostartStatus = useCallback(async () => {
@@ -251,49 +249,43 @@ function App() {
             <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
               {t('app.title')}
             </Typography>
-            <Select
-              value={language}
-              variant="standard"
-              disableUnderline
-              onChange={onLanguageSelectChange}
-              sx={{
-                mr: 2,
-                minWidth: 140,
-                color: 'common.white',
-                borderRadius: 1,
-                px: 1,
-                '&:hover': { bgcolor: 'rgba(255,255,255,0.1)' },
-                '.MuiSvgIcon-root': { color: 'common.white' },
-              }}
-              inputProps={{ 'aria-label': t('app.language') }}
+            <Tooltip title={t('app.language')}>
+              <IconButton color="inherit" onClick={e => setLangMenuAnchor(e.currentTarget)}>
+                <Language />
+              </IconButton>
+            </Tooltip>
+            <Menu
+              anchorEl={langMenuAnchor}
+              open={Boolean(langMenuAnchor)}
+              onClose={() => setLangMenuAnchor(null)}
             >
-              <MenuItem value="zh-CN">中文</MenuItem>
-              <MenuItem value="en">English</MenuItem>
-              <MenuItem value="ja">日本語</MenuItem>
-            </Select>
+              <MenuItem selected={language === 'zh-CN'} onClick={() => { void handleLanguageChange('zh-CN') }}>中文</MenuItem>
+              <MenuItem selected={language === 'en'} onClick={() => { void handleLanguageChange('en') }}>English</MenuItem>
+              <MenuItem selected={language === 'ja'} onClick={() => { void handleLanguageChange('ja') }}>日本語</MenuItem>
+            </Menu>
             {isWindows && (
-              <FormControlLabel
-                sx={{ mr: 1, color: 'common.white' }}
-                control={(
+              <Tooltip title={t('app.launchAtStartup')}>
+                <Box component="span" sx={{ display: 'inline-flex', alignItems: 'center' }}>
                   <Switch
                     size="small"
                     color="default"
                     checked={autostartEnabled}
                     disabled={autostartLoading}
-                    onChange={(_, checked) => {
-                      void handleAutostartChange(checked)
-                    }}
+                    onChange={(_, checked) => { void handleAutostartChange(checked) }}
                   />
-                )}
-                label={t('app.launchAtStartup')}
-              />
+                </Box>
+              </Tooltip>
             )}
-            <Button color="inherit" startIcon={<FileUpload />} onClick={handleImportClick}>
-              {t('app.import')}
-            </Button>
-            <Button color="inherit" startIcon={<FileDownload />} onClick={handleExportClick}>
-              {t('app.export')}
-            </Button>
+            <Tooltip title={t('app.import')}>
+              <IconButton color="inherit" onClick={handleImportClick}>
+                <FileUpload />
+              </IconButton>
+            </Tooltip>
+            <Tooltip title={t('app.export')}>
+              <IconButton color="inherit" onClick={handleExportClick}>
+                <FileDownload />
+              </IconButton>
+            </Tooltip>
             <Button
               color="inherit"
               startIcon={<Add />}
