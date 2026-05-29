@@ -65,10 +65,9 @@ jobs:
           releaseDraft: false
           prerelease: false
           projectPath: frontend_react
-          updaterJsonKeepUniversal: true
 
   build-windows:
-    needs: release-please
+    needs: [release-please, build-linux]
     if: ${{ needs.release-please.outputs.release_created }}
     runs-on: windows-latest
     env:
@@ -133,5 +132,4 @@ jobs:
           releaseDraft: false
           prerelease: false
           projectPath: frontend_react
-          updaterJsonKeepUniversal: true
           updaterJsonPreferNsis: true
