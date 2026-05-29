@@ -123,4 +123,30 @@ describe('UpdateDialog', () => {
     expect(onClose).not.toHaveBeenCalled()
     resolveDownload()
   })
+
+  it('shows error message and re-enables buttons when download fails', async () => {
+    const downloadAndInstall = vi.fn().mockRejectedValue(new Error('Network error'))
+    const update = makeMockUpdate({ downloadAndInstall })
+    render(
+      <UpdateDialog open update={update} currentVersion="0.6.0" onClose={onClose} />,
+    )
+    fireEvent.click(screen.getByText('Install Update'))
+    await waitFor(() => {
+      expect(screen.getByText(/Network error/)).toBeInTheDocument()
+    })
+    expect(screen.getByText('Install Update')).toBeInTheDocument()
+    expect(screen.getByText('Later')).not.toBeDisabled()
+  })
+
+  it('resets state when dialog is reopened', () => {
+    const update = makeMockUpdate()
+    const { rerender } = render(
+      <UpdateDialog open={false} update={update} currentVersion="0.6.0" onClose={onClose} />,
+    )
+    rerender(
+      <UpdateDialog open update={update} currentVersion="0.6.0" onClose={onClose} />,
+    )
+    expect(screen.getByText('Install Update')).toBeInTheDocument()
+    expect(screen.queryByRole('progressbar')).not.toBeInTheDocument()
+  })
 })
