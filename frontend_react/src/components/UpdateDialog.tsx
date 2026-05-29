@@ -78,20 +78,15 @@ export default function UpdateDialog({ open, update, currentVersion, onClose }: 
           </>
         )}
         {phase === 'downloading' && (
-          <Typography variant="body2">
-            {t('updater.downloadingLabel', { percent: progress })}
-          </Typography>
-        )}
-        {/* LinearProgress is shown in both 'downloading' and 'ready' phases.
-            React 19 batches synchronous state updates, so if downloadAndInstall
-            fires Finished immediately, the component jumps straight to 'ready'
-            without rendering a distinct 'downloading' state. Keeping the progress
-            bar visible in 'ready' ensures the UI remains consistent. */}
-        {phase !== 'available' && (
-          <LinearProgress
-            variant={progress > 0 ? 'determinate' : 'indeterminate'}
-            value={progress}
-          />
+          <>
+            <Typography variant="body2">
+              {t('updater.downloadingLabel', { percent: progress })}
+            </Typography>
+            <LinearProgress
+              variant={progress > 0 ? 'determinate' : 'indeterminate'}
+              value={progress}
+            />
+          </>
         )}
         {phase === 'ready' && (
           <Typography variant="body2">{t('updater.readyLabel')}</Typography>

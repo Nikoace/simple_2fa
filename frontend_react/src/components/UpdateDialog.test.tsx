@@ -50,14 +50,9 @@ describe('UpdateDialog', () => {
   })
 
   it('shows progress bar while downloading', async () => {
+    let resolveDownload!: () => void
     const downloadAndInstall = vi.fn().mockImplementation(
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      async (onEvent: (e: any) => void) => {
-        onEvent({ event: 'Started', data: { contentLength: 1000 } })
-        onEvent({ event: 'Progress', data: { chunkLength: 500 } })
-        onEvent({ event: 'Progress', data: { chunkLength: 500 } })
-        onEvent({ event: 'Finished' })
-      },
+      () => new Promise<void>(resolve => { resolveDownload = resolve }),
     )
     const update = makeMockUpdate({ downloadAndInstall })
     render(
@@ -67,6 +62,7 @@ describe('UpdateDialog', () => {
     await waitFor(() => {
       expect(screen.getByRole('progressbar')).toBeInTheDocument()
     })
+    resolveDownload()
   })
 
   it('shows Restart button after download finishes', async () => {
