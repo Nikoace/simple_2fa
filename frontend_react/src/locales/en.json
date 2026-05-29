@@ -85,5 +85,16 @@
     "noIssuer": "(No issuer)",
     "cancel": "Cancel",
     "confirmWithCount": "{{label}} ({{count}})"
+  },
+  "updater": {
+    "dialogTitle": "Update Available",
+    "versionLabel": "{{current}} → {{next}}",
+    "downloadingLabel": "Downloading update... {{percent}}%",
+    "readyLabel": "Download complete. Restart to apply.",
+    "installButton": "Install Update",
+    "restartButton": "Restart & Install",
+    "laterButton": "Later",
+    "checkButton": "Check for Updates",
+    "upToDate": "You are on the latest version"
   }
 }
