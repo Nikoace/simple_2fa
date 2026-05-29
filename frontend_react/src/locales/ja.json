@@ -95,6 +95,7 @@
     "restartButton": "再起動してインストール",
     "laterButton": "後で",
     "checkButton": "アップデートを確認",
-    "upToDate": "最新バージョンです"
+    "upToDate": "最新バージョンです",
+    "checkFailed": "アップデート確認に失敗しました。接続を確認してください。"
   }
 }

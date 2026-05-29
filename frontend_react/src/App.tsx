@@ -91,6 +91,9 @@ function App() {
       }
     } catch (error) {
       console.error('Update check failed', error)
+      if (showNoUpdateSnackbar) {
+        showSnackbar(t('updater.checkFailed'), 'error')
+      }
     } finally {
       setIsCheckingUpdate(false)
     }
@@ -269,10 +272,14 @@ function App() {
   useEffect(() => {
     fetchAccounts()
     void loadAutostartStatus()
-    void checkForUpdates()
     const interval = setInterval(fetchAccounts, 5000)
     return () => clearInterval(interval)
-  }, [fetchAccounts, loadAutostartStatus, checkForUpdates])
+  }, [fetchAccounts, loadAutostartStatus])
+
+  // Run once on mount only — intentionally excludes checkForUpdates from deps
+  // to prevent re-firing when language changes recreate the t() function reference.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => { void checkForUpdates() }, [])
 
   return (
     <>
