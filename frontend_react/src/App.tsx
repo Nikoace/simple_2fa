@@ -21,6 +21,17 @@ import {
   getAutostartEnabled, setAutostartEnabled as updateAutostartEnabled,
 } from './tauriApi'
 import { supportedLanguages, type SupportedLanguage } from './i18n'
+import { keyframes } from '@mui/system'
+import { SystemUpdateAlt } from '@mui/icons-material'
+import { check } from '@tauri-apps/plugin-updater'
+import { getVersion } from '@tauri-apps/api/app'
+import type { Update } from '@tauri-apps/plugin-updater'
+import UpdateDialog from './components/UpdateDialog'
+
+const spin = keyframes`
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+`
 
 const isWindows = typeof navigator !== 'undefined' && navigator.userAgent.includes('Windows')
 
@@ -54,6 +65,10 @@ function App() {
   const [importStrategy, setImportStrategy] = useState<DuplicateStrategy>('Skip')
   const [autostartEnabled, setAutostartEnabled] = useState(false)
   const [autostartLoading, setAutostartLoading] = useState(false)
+  const [pendingUpdate, setPendingUpdate] = useState<Update | null>(null)
+  const [updateDialogOpen, setUpdateDialogOpen] = useState(false)
+  const [currentAppVersion, setCurrentAppVersion] = useState('')
+  const [isCheckingUpdate, setIsCheckingUpdate] = useState(false)
 
   const [snackbar, setSnackbar] = useState<{ open: boolean; message: string; severity: 'success' | 'error' }>({
     open: false, message: '', severity: 'success'
@@ -62,6 +77,27 @@ function App() {
   const showSnackbar = useCallback((message: string, severity: 'success' | 'error' = 'success') => {
     setSnackbar({ open: true, message, severity })
   }, [])
+
+  const checkForUpdates = useCallback(async (showNoUpdateSnackbar = false) => {
+    setIsCheckingUpdate(true)
+    try {
+      const [version, update] = await Promise.all([getVersion(), check()])
+      setCurrentAppVersion(version)
+      if (update) {
+        setPendingUpdate(update)
+        setUpdateDialogOpen(true)
+      } else if (showNoUpdateSnackbar) {
+        showSnackbar(t('updater.upToDate'))
+      }
+    } catch (error) {
+      console.error('Update check failed', error)
+      if (showNoUpdateSnackbar) {
+        showSnackbar(t('updater.checkFailed'), 'error')
+      }
+    } finally {
+      setIsCheckingUpdate(false)
+    }
+  }, [showSnackbar, t])
 
   const handleSnackbarClose = () => setSnackbar(s => ({ ...s, open: false }))
 
@@ -240,6 +276,11 @@ function App() {
     return () => clearInterval(interval)
   }, [fetchAccounts, loadAutostartStatus])
 
+  // Run once on mount only — intentionally excludes checkForUpdates from deps
+  // to prevent re-firing when language changes recreate the t() function reference.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => { void checkForUpdates() }, [])
+
   return (
     <>
       <CssBaseline />
@@ -263,6 +304,17 @@ function App() {
               <MenuItem selected={language === 'en'} onClick={() => { void handleLanguageChange('en') }}>English</MenuItem>
               <MenuItem selected={language === 'ja'} onClick={() => { void handleLanguageChange('ja') }}>日本語</MenuItem>
             </Menu>
+            <Tooltip title={t('updater.checkButton')}>
+              <IconButton
+                color="inherit"
+                onClick={() => { void checkForUpdates(true) }}
+                disabled={isCheckingUpdate}
+              >
+                <SystemUpdateAlt
+                  sx={isCheckingUpdate ? { animation: `${spin} 1s linear infinite` } : {}}
+                />
+              </IconButton>
+            </Tooltip>
             {isWindows && (
               <Tooltip title={t('app.launchAtStartup')}>
                 <Box component="span" sx={{ display: 'inline-flex', alignItems: 'center' }}>
@@ -386,6 +438,15 @@ function App() {
             {snackbar.message}
           </Alert>
         </Snackbar>
+
+        {pendingUpdate && (
+          <UpdateDialog
+            open={updateDialogOpen}
+            update={pendingUpdate}
+            currentVersion={currentAppVersion}
+            onClose={() => setUpdateDialogOpen(false)}
+          />
+        )}
       </Box>
     </>
   )
