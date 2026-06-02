@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.7.0](https://github.com/Nikoace/simple_2fa/compare/simple-2fa-v0.6.0...simple-2fa-v0.7.0) (2026-06-02)
+
+
+### Features
+
+* add tauri-plugin-updater auto-update support ([#23](https://github.com/Nikoace/simple_2fa/issues/23)) ([8127d67](https://github.com/Nikoace/simple_2fa/commit/8127d67e8d37dbe7bef1085be87eebf22aa84a28))
+
+
+### Bug Fixes
+
+* **config:** upgrade tauri to 2.11.2 to fix CVE-2026-42184 Origin Confusion ([aec0bc0](https://github.com/Nikoace/simple_2fa/commit/aec0bc07975c35154adad130e945daa3232fb3d0))
+* **rust:** fix doc comment list indentation in totp.rs ([a8d31b5](https://github.com/Nikoace/simple_2fa/commit/a8d31b5022860b6953e06e29d3ee5145c8a7c22c))
+
 ## [0.6.0](https://github.com/Nikoace/simple_2fa/compare/simple-2fa-v0.5.0...simple-2fa-v0.6.0) (2026-05-06)
 
 
