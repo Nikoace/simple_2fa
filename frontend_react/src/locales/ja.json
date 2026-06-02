@@ -85,5 +85,17 @@
     "noIssuer": "（発行元なし）",
     "cancel": "キャンセル",
     "confirmWithCount": "{{label}}（{{count}} 件）"
+  },
+  "updater": {
+    "dialogTitle": "アップデートが見つかりました",
+    "versionLabel": "{{current}} → {{next}}",
+    "downloadingLabel": "アップデートをダウンロード中... {{percent}}%",
+    "readyLabel": "ダウンロード完了。再起動して適用します。",
+    "installButton": "今すぐ更新",
+    "restartButton": "再起動してインストール",
+    "laterButton": "後で",
+    "checkButton": "アップデートを確認",
+    "upToDate": "最新バージョンです",
+    "checkFailed": "アップデート確認に失敗しました。接続を確認してください。"
   }
 }
