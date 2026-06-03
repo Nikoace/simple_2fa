@@ -21,7 +21,7 @@
     "@fontsource/roboto": "^5.2.9",
     "@mui/icons-material": "^7.3.7",
     "@mui/material": "^7.3.7",
-    "@tauri-apps/api": "^2.10.1",
+    "@tauri-apps/api": "^2.11.0",
     "@tauri-apps/plugin-autostart": "^2.5.1",
     "@tauri-apps/plugin-dialog": "^2.6.0",
     "@tauri-apps/plugin-process": "^2",
@@ -34,7 +34,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",
-    "@tauri-apps/cli": "^2.10.1",
+    "@tauri-apps/cli": "^2.11.0",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
     "@types/node": "^25.0.10",
