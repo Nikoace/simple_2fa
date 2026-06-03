@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.7.1](https://github.com/Nikoace/simple_2fa/compare/simple-2fa-v0.7.0...simple-2fa-v0.7.1) (2026-06-03)
+
+
+### Bug Fixes
+
+* **config:** sync [@tauri-apps](https://github.com/tauri-apps) npm packages to v2.11 to match Rust crate ([ed58f43](https://github.com/Nikoace/simple_2fa/commit/ed58f430f8b176242fecfd775e5880401805dd93))
+
 ## [0.7.0](https://github.com/Nikoace/simple_2fa/compare/simple-2fa-v0.6.0...simple-2fa-v0.7.0) (2026-06-02)
 
 
