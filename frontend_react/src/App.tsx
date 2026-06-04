@@ -5,7 +5,7 @@ import {
   FormControl, MenuItem,
   FormControlLabel, FormLabel, Radio, RadioGroup, Switch,
   Snackbar, Alert,
-  IconButton, Tooltip, Menu,
+  IconButton, Tooltip, Menu, CircularProgress,
 } from '@mui/material'
 import { Add, FileDownload, FileUpload, Language } from '@mui/icons-material'
 import { useTranslation } from 'react-i18next'
@@ -21,17 +21,12 @@ import {
   getAutostartEnabled, setAutostartEnabled as updateAutostartEnabled,
 } from './tauriApi'
 import { supportedLanguages, type SupportedLanguage } from './i18n'
-import { keyframes } from '@mui/system'
 import { SystemUpdateAlt } from '@mui/icons-material'
 import { check } from '@tauri-apps/plugin-updater'
 import { getVersion } from '@tauri-apps/api/app'
 import type { Update } from '@tauri-apps/plugin-updater'
 import UpdateDialog from './components/UpdateDialog'
 
-const spin = keyframes`
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-`
 
 const isWindows = typeof navigator !== 'undefined' && navigator.userAgent.includes('Windows')
 
@@ -310,9 +305,9 @@ function App() {
                 onClick={() => { void checkForUpdates(true) }}
                 disabled={isCheckingUpdate}
               >
-                <SystemUpdateAlt
-                  sx={isCheckingUpdate ? { animation: `${spin} 1s linear infinite` } : {}}
-                />
+                {isCheckingUpdate
+                  ? <CircularProgress size={20} color="inherit" />
+                  : <SystemUpdateAlt />}
               </IconButton>
             </Tooltip>
             {isWindows && (
