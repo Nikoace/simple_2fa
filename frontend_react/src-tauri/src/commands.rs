@@ -263,9 +263,9 @@ mod tests {
 
     #[test]
     fn test_preview_import_returns_name_and_issuer_only() {
-        let file = make_s2fa_file(&sample_accounts(), "pw");
+        let file = make_s2fa_file(&sample_accounts(), "pw"); // lgtm[rust/hard-coded-cryptographic-value]
         let preview =
-            preview_import("pw".to_string(), file.path().to_str().unwrap().to_string()).unwrap();
+            preview_import("pw".to_string(), file.path().to_str().unwrap().to_string()).unwrap(); // lgtm[rust/hard-coded-cryptographic-value]
         assert_eq!(preview.len(), 3);
         assert_eq!(preview[0].name, "alice");
         assert_eq!(preview[0].issuer, Some("GitHub".to_string()));
@@ -274,9 +274,9 @@ mod tests {
 
     #[test]
     fn test_preview_import_wrong_password() {
-        let file = make_s2fa_file(&sample_accounts(), "correct");
+        let file = make_s2fa_file(&sample_accounts(), "correct"); // lgtm[rust/hard-coded-cryptographic-value]
         let result = preview_import(
-            "wrong".to_string(),
+            "wrong".to_string(), // lgtm[rust/hard-coded-cryptographic-value]
             file.path().to_str().unwrap().to_string(),
         );
         assert!(result.is_err());
@@ -293,9 +293,9 @@ mod tests {
 
     #[test]
     fn test_preview_import_empty_accounts() {
-        let file = make_s2fa_file(&[], "pw");
+        let file = make_s2fa_file(&[], "pw"); // lgtm[rust/hard-coded-cryptographic-value]
         let preview =
-            preview_import("pw".to_string(), file.path().to_str().unwrap().to_string()).unwrap();
+            preview_import("pw".to_string(), file.path().to_str().unwrap().to_string()).unwrap(); // lgtm[rust/hard-coded-cryptographic-value]
         assert!(preview.is_empty());
     }
 
@@ -314,10 +314,10 @@ mod tests {
 
         // 加密并写入文件，再解密校验数量一致
         let file = NamedTempFile::with_suffix(".s2fa").unwrap();
-        let encrypted = encrypt_accounts(&exported, "pw").unwrap();
+        let encrypted = encrypt_accounts(&exported, "pw").unwrap(); // lgtm[rust/hard-coded-cryptographic-value]
         std::fs::write(file.path(), &encrypted).unwrap();
         let data = std::fs::read(file.path()).unwrap();
-        let decrypted = crate::crypto::decrypt_accounts(&data, "pw").unwrap();
+        let decrypted = crate::crypto::decrypt_accounts(&data, "pw").unwrap(); // lgtm[rust/hard-coded-cryptographic-value]
         assert_eq!(decrypted.len(), 3);
     }
 
@@ -325,7 +325,7 @@ mod tests {
 
     #[test]
     fn test_import_selected_indices_subset() {
-        let file = make_s2fa_file(&sample_accounts(), "pw");
+        let file = make_s2fa_file(&sample_accounts(), "pw"); // lgtm[rust/hard-coded-cryptographic-value]
         let conn = init_db_memory().unwrap();
         use std::sync::Mutex;
         let state_inner = AppState {
@@ -334,7 +334,7 @@ mod tests {
         // 只导入索引 0 和 2（alice, carol），跳过 bob
         // 直接调用内部逻辑（不通过 Tauri State）
         let data = std::fs::read(file.path()).unwrap();
-        let all_accounts = crate::crypto::decrypt_accounts(&data, "pw").unwrap();
+        let all_accounts = crate::crypto::decrypt_accounts(&data, "pw").unwrap(); // lgtm[rust/hard-coded-cryptographic-value]
         let selected: Vec<_> = [0usize, 2]
             .iter()
             .filter_map(|&i| all_accounts.get(i).cloned())

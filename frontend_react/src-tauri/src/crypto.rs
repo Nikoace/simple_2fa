@@ -46,7 +46,7 @@ fn derive_key(password: &str, salt: &[u8]) -> Result<[u8; 32], CryptoError> {
     .map_err(|_| CryptoError::KeyDerivationFailed)?;
 
     let argon2 = Argon2::new(argon2::Algorithm::Argon2id, Version::V0x13, params);
-    let mut key = [0u8; 32];
+    let mut key = [0u8; 32]; // lgtm[rust/hard-coded-cryptographic-value]
     argon2
         .hash_password_into(password.as_bytes(), salt, &mut key)
         .map_err(|_| CryptoError::KeyDerivationFailed)?;
@@ -59,7 +59,7 @@ pub fn encrypt_accounts(
     password: &str,
 ) -> Result<Vec<u8>, CryptoError> {
     // 随机生成 salt 和 nonce
-    let mut salt = [0u8; SALT_LEN];
+    let mut salt = [0u8; SALT_LEN]; // lgtm[rust/hard-coded-cryptographic-value]
     let mut nonce_bytes = [0u8; NONCE_LEN];
     OsRng.fill_bytes(&mut salt);
     OsRng.fill_bytes(&mut nonce_bytes);
@@ -141,7 +141,7 @@ mod tests {
     #[test]
     fn test_encrypt_decrypt_roundtrip() {
         let accounts = sample_accounts();
-        let password = "test_password_123";
+        let password = "test_password_123"; // lgtm[rust/hard-coded-cryptographic-value]
 
         let encrypted = encrypt_accounts(&accounts, password).expect("加密失败");
         let decrypted = decrypt_accounts(&encrypted, password).expect("解密失败");
@@ -152,8 +152,8 @@ mod tests {
     #[test]
     fn test_decrypt_wrong_password() {
         let accounts = sample_accounts();
-        let encrypted = encrypt_accounts(&accounts, "correct_password").expect("加密失败");
-        let result = decrypt_accounts(&encrypted, "wrong_password");
+        let encrypted = encrypt_accounts(&accounts, "correct_password").expect("加密失败"); // lgtm[rust/hard-coded-cryptographic-value]
+        let result = decrypt_accounts(&encrypted, "wrong_password"); // lgtm[rust/hard-coded-cryptographic-value]
 
         assert!(matches!(result, Err(CryptoError::DecryptionFailed)));
     }
@@ -161,12 +161,12 @@ mod tests {
     #[test]
     fn test_decrypt_corrupted_data() {
         let accounts = sample_accounts();
-        let mut encrypted = encrypt_accounts(&accounts, "password").expect("加密失败");
+        let mut encrypted = encrypt_accounts(&accounts, "password").expect("加密失败"); // lgtm[rust/hard-coded-cryptographic-value]
         // 损坏密文部分
         let last = encrypted.len() - 1;
         encrypted[last] ^= 0xFF;
 
-        let result = decrypt_accounts(&encrypted, "password");
+        let result = decrypt_accounts(&encrypted, "password"); // lgtm[rust/hard-coded-cryptographic-value]
         assert!(matches!(result, Err(CryptoError::DecryptionFailed)));
     }
 
@@ -176,37 +176,37 @@ mod tests {
         // 错误的 magic bytes
         data[..8].copy_from_slice(b"INVALID!");
 
-        let result = decrypt_accounts(&data, "password");
+        let result = decrypt_accounts(&data, "password"); // lgtm[rust/hard-coded-cryptographic-value]
         assert!(matches!(result, Err(CryptoError::InvalidFormat)));
     }
 
     #[test]
     fn test_decrypt_too_short() {
         let data = vec![0u8; 10]; // 太短
-        let result = decrypt_accounts(&data, "password");
+        let result = decrypt_accounts(&data, "password"); // lgtm[rust/hard-coded-cryptographic-value]
         assert!(matches!(result, Err(CryptoError::InvalidFormat)));
     }
 
     #[test]
     fn test_encrypt_empty_accounts() {
         let accounts: Vec<ExportAccount> = vec![];
-        let encrypted = encrypt_accounts(&accounts, "password").expect("加密空列表失败");
-        let decrypted = decrypt_accounts(&encrypted, "password").expect("解密失败");
+        let encrypted = encrypt_accounts(&accounts, "password").expect("加密空列表失败"); // lgtm[rust/hard-coded-cryptographic-value]
+        let decrypted = decrypt_accounts(&encrypted, "password").expect("解密失败"); // lgtm[rust/hard-coded-cryptographic-value]
         assert!(decrypted.is_empty());
     }
 
     #[test]
     fn test_different_passwords_produce_different_output() {
         let accounts = sample_accounts();
-        let enc1 = encrypt_accounts(&accounts, "password1").expect("加密失败");
-        let enc2 = encrypt_accounts(&accounts, "password2").expect("加密失败");
+        let enc1 = encrypt_accounts(&accounts, "password1").expect("加密失败"); // lgtm[rust/hard-coded-cryptographic-value]
+        let enc2 = encrypt_accounts(&accounts, "password2").expect("加密失败"); // lgtm[rust/hard-coded-cryptographic-value]
         assert_ne!(enc1, enc2);
     }
 
     #[test]
     fn test_random_salt_produces_different_output() {
         let accounts = sample_accounts();
-        let password = "same_password";
+        let password = "same_password"; // lgtm[rust/hard-coded-cryptographic-value]
         let enc1 = encrypt_accounts(&accounts, password).expect("加密失败");
         let enc2 = encrypt_accounts(&accounts, password).expect("加密失败");
         // 因 salt/nonce 随机，两次加密结果应不同
@@ -220,8 +220,8 @@ mod tests {
             issuer: None,
             secret: "JBSWY3DPEHPK3PXP".to_string(),
         }];
-        let encrypted = encrypt_accounts(&accounts, "pw").expect("加密失败");
-        let decrypted = decrypt_accounts(&encrypted, "pw").expect("解密失败");
+        let encrypted = encrypt_accounts(&accounts, "pw").expect("加密失败"); // lgtm[rust/hard-coded-cryptographic-value]
+        let decrypted = decrypt_accounts(&encrypted, "pw").expect("解密失败"); // lgtm[rust/hard-coded-cryptographic-value]
         assert_eq!(accounts, decrypted);
         assert!(decrypted[0].issuer.is_none());
     }
