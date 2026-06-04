@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import {
-  Container, Typography, Box, Button, AppBar, Toolbar, CssBaseline,
+  Container, Typography, Box, Button, Fab, AppBar, Toolbar, CssBaseline,
   Dialog, DialogTitle, DialogContent, DialogActions, DialogContentText,
   FormControl, MenuItem,
   FormControlLabel, FormLabel, Radio, RadioGroup, Switch,
@@ -338,19 +338,24 @@ function App() {
                 <FileDownload />
               </IconButton>
             </Tooltip>
-            <Button
-              color="inherit"
-              startIcon={<Add />}
-              onClick={() => { setEditingAccount(null); setModalOpen(true) }}
-            >
-              {t('app.addAccount')}
-            </Button>
           </Toolbar>
         </AppBar>
 
         <Container maxWidth="sm" sx={{ mt: 4 }}>
           <AccountList accounts={accounts} onDelete={confirmDelete} onEdit={handleEdit} onRefresh={fetchAccounts} />
         </Container>
+
+        {/* 右下角悬浮添加按钮 */}
+        <Tooltip title={t('app.addAccount')}>
+          <Fab
+            color="primary"
+            aria-label={t('app.addAccount')}
+            onClick={() => { setEditingAccount(null); setModalOpen(true) }}
+            sx={{ position: 'fixed', bottom: 16, right: 16 }}
+          >
+            <Add />
+          </Fab>
+        </Tooltip>
 
         <AddAccountModal
           open={modalOpen}
