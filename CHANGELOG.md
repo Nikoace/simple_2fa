@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.8.0](https://github.com/Nikoace/simple_2fa/compare/simple-2fa-v0.7.1...simple-2fa-v0.8.0) (2026-06-04)
+
+
+### Features
+
+* **frontend:** replace add account button with FAB in bottom-right corner ([ece87ca](https://github.com/Nikoace/simple_2fa/commit/ece87cacd4dd6eb15fb0dc7c3e1597189bd00ed7))
+
+
+### Bug Fixes
+
+* **frontend:** replace spinning icon with CircularProgress for update check ([618eb11](https://github.com/Nikoace/simple_2fa/commit/618eb11bc399b3c1e481f09e6c3f6a9d43faed30))
+* **frontend:** silent background update check on startup ([a572769](https://github.com/Nikoace/simple_2fa/commit/a5727691e5ebc765a43919d9810b6860e79fd3b8))
+* **security:** suppress CodeQL false positives in tests and add workflow permissions ([3f8b9e7](https://github.com/Nikoace/simple_2fa/commit/3f8b9e7f6f0b25d91704851cf743dcab4138e34f))
+
 ## [0.7.1](https://github.com/Nikoace/simple_2fa/compare/simple-2fa-v0.7.0...simple-2fa-v0.7.1) (2026-06-03)
 
 
