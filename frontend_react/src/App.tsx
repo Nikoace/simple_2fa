@@ -79,7 +79,7 @@ function App() {
   }, [])
 
   const checkForUpdates = useCallback(async (showNoUpdateSnackbar = false) => {
-    setIsCheckingUpdate(true)
+    if (showNoUpdateSnackbar) setIsCheckingUpdate(true)
     try {
       const [version, update] = await Promise.all([getVersion(), check()])
       setCurrentAppVersion(version)
