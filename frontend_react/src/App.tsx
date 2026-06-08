@@ -94,9 +94,9 @@ function App() {
     }
   }, [showSnackbar, t])
 
-  const handleCheckUpdatesFromSettings = useCallback(() => {
+  const handleCheckUpdatesFromSettings = useCallback(async () => {
+    await checkForUpdates(true)
     setSettingsOpen(false)
-    void checkForUpdates(true)
   }, [checkForUpdates])
 
   const handleSnackbarClose = () => setSnackbar(s => ({ ...s, open: false }))
@@ -149,10 +149,10 @@ function App() {
     showSnackbar(editingAccount ? t('app.snackbar.accountUpdated') : t('app.snackbar.accountAdded'))
   }
 
-  const handleLanguageChange = async (newLanguage: SupportedLanguage) => {
+  const handleLanguageChange = useCallback(async (newLanguage: SupportedLanguage) => {
     setLanguage(newLanguage)
     await i18n.changeLanguage(newLanguage)
-  }
+  }, [i18n])
 
   const loadAutostartStatus = useCallback(async () => {
     if (!isWindows) return
@@ -164,7 +164,7 @@ function App() {
     }
   }, [showSnackbar])
 
-  const handleAutostartChange = async (enabled: boolean) => {
+  const handleAutostartChange = useCallback(async (enabled: boolean) => {
     setAutostartLoading(true)
     try {
       await updateAutostartEnabled(enabled)
@@ -177,7 +177,7 @@ function App() {
     } finally {
       setAutostartLoading(false)
     }
-  }
+  }, [showSnackbar, t])
 
   // --- Export flow ---
   // Step 1: open account selection dialog
