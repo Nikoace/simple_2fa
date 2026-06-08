@@ -2,12 +2,12 @@ import { useState, useEffect, useCallback } from 'react'
 import {
   Container, Typography, Box, Button, Fab, AppBar, Toolbar, CssBaseline,
   Dialog, DialogTitle, DialogContent, DialogActions, DialogContentText,
-  FormControl, MenuItem,
-  FormControlLabel, FormLabel, Radio, RadioGroup, Switch,
+  FormControl,
+  FormControlLabel, FormLabel, Radio, RadioGroup,
   Snackbar, Alert,
-  IconButton, Tooltip, Menu, CircularProgress,
+  IconButton, Tooltip,
 } from '@mui/material'
-import { Add, FileDownload, FileUpload, Language } from '@mui/icons-material'
+import { Add, FileDownload, FileUpload, Settings } from '@mui/icons-material'
 import { useTranslation } from 'react-i18next'
 import AccountList from './components/AccountList'
 import AddAccountModal from './components/AddAccountModal'
@@ -21,11 +21,11 @@ import {
   getAutostartEnabled, setAutostartEnabled as updateAutostartEnabled,
 } from './tauriApi'
 import { supportedLanguages, type SupportedLanguage } from './i18n'
-import { SystemUpdateAlt } from '@mui/icons-material'
 import { check } from '@tauri-apps/plugin-updater'
 import { getVersion } from '@tauri-apps/api/app'
 import type { Update } from '@tauri-apps/plugin-updater'
 import UpdateDialog from './components/UpdateDialog'
+import SettingsDialog from './components/SettingsDialog'
 
 
 const isWindows = typeof navigator !== 'undefined' && navigator.userAgent.includes('Windows')
@@ -40,7 +40,7 @@ function App() {
       ? i18n.resolvedLanguage
       : 'zh-CN') as SupportedLanguage
   )
-  const [langMenuAnchor, setLangMenuAnchor] = useState<null | HTMLElement>(null)
+  const [settingsOpen, setSettingsOpen] = useState(false)
 
   // Delete
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
@@ -94,6 +94,11 @@ function App() {
     }
   }, [showSnackbar, t])
 
+  const handleCheckUpdatesFromSettings = useCallback(() => {
+    setSettingsOpen(false)
+    void checkForUpdates(true)
+  }, [checkForUpdates])
+
   const handleSnackbarClose = () => setSnackbar(s => ({ ...s, open: false }))
 
   const fetchAccounts = useCallback(async () => {
@@ -146,7 +151,6 @@ function App() {
 
   const handleLanguageChange = async (newLanguage: SupportedLanguage) => {
     setLanguage(newLanguage)
-    setLangMenuAnchor(null)
     await i18n.changeLanguage(newLanguage)
   }
 
@@ -285,44 +289,6 @@ function App() {
             <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
               {t('app.title')}
             </Typography>
-            <Tooltip title={t('app.language')}>
-              <IconButton color="inherit" onClick={e => setLangMenuAnchor(e.currentTarget)}>
-                <Language />
-              </IconButton>
-            </Tooltip>
-            <Menu
-              anchorEl={langMenuAnchor}
-              open={Boolean(langMenuAnchor)}
-              onClose={() => setLangMenuAnchor(null)}
-            >
-              <MenuItem selected={language === 'zh-CN'} onClick={() => { void handleLanguageChange('zh-CN') }}>中文</MenuItem>
-              <MenuItem selected={language === 'en'} onClick={() => { void handleLanguageChange('en') }}>English</MenuItem>
-              <MenuItem selected={language === 'ja'} onClick={() => { void handleLanguageChange('ja') }}>日本語</MenuItem>
-            </Menu>
-            <Tooltip title={t('updater.checkButton')}>
-              <IconButton
-                color="inherit"
-                onClick={() => { void checkForUpdates(true) }}
-                disabled={isCheckingUpdate}
-              >
-                {isCheckingUpdate
-                  ? <CircularProgress size={20} color="inherit" />
-                  : <SystemUpdateAlt />}
-              </IconButton>
-            </Tooltip>
-            {isWindows && (
-              <Tooltip title={t('app.launchAtStartup')}>
-                <Box component="span" sx={{ display: 'inline-flex', alignItems: 'center' }}>
-                  <Switch
-                    size="small"
-                    color="default"
-                    checked={autostartEnabled}
-                    disabled={autostartLoading}
-                    onChange={(_, checked) => { void handleAutostartChange(checked) }}
-                  />
-                </Box>
-              </Tooltip>
-            )}
             <Tooltip title={t('app.import')}>
               <IconButton color="inherit" onClick={handleImportClick}>
                 <FileUpload />
@@ -331,6 +297,11 @@ function App() {
             <Tooltip title={t('app.export')}>
               <IconButton color="inherit" onClick={handleExportClick}>
                 <FileDownload />
+              </IconButton>
+            </Tooltip>
+            <Tooltip title={t('app.settings')}>
+              <IconButton color="inherit" onClick={() => setSettingsOpen(true)}>
+                <Settings />
               </IconButton>
             </Tooltip>
           </Toolbar>
@@ -357,6 +328,20 @@ function App() {
           onClose={handleModalClose}
           onAccountAdded={handleAccountAdded}
           initialData={editingAccount}
+        />
+
+        <SettingsDialog
+          open={settingsOpen}
+          onClose={() => setSettingsOpen(false)}
+          language={language}
+          onLanguageChange={lang => { void handleLanguageChange(lang) }}
+          isWindows={isWindows}
+          autostartEnabled={autostartEnabled}
+          autostartLoading={autostartLoading}
+          onAutostartChange={enabled => { void handleAutostartChange(enabled) }}
+          onCheckUpdates={handleCheckUpdatesFromSettings}
+          isCheckingUpdate={isCheckingUpdate}
+          currentVersion={currentAppVersion}
         />
 
         {/* Export: Step 1 — Select accounts */}
