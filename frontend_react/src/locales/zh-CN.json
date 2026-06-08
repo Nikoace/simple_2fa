@@ -18,6 +18,7 @@
     "deleteDialogSuffix": "此操作不可撤销。",
     "cancel": "取消",
     "delete": "删除",
+    "settings": "设置",
     "snackbar": {
       "accountDeleted": "账户删除成功",
       "accountUpdated": "账户已更新",

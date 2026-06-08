@@ -18,6 +18,7 @@
     "deleteDialogSuffix": "This action cannot be undone.",
     "cancel": "Cancel",
     "delete": "Delete",
+    "settings": "Settings",
     "snackbar": {
       "accountDeleted": "Account deleted successfully",
       "accountUpdated": "Account updated",

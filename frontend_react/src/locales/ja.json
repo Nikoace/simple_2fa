@@ -18,6 +18,7 @@
     "deleteDialogSuffix": "この操作は元に戻せません。",
     "cancel": "キャンセル",
     "delete": "削除",
+    "settings": "設定",
     "snackbar": {
       "accountDeleted": "アカウントを削除しました",
       "accountUpdated": "アカウントを更新しました",
