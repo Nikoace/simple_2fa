@@ -81,4 +81,25 @@ describe('SettingsDialog', () => {
     fireEvent.click(screen.getByText('Cancel'))
     expect(onClose).toHaveBeenCalledOnce()
   })
+
+  it('disables autostart switch when autostartLoading=true', () => {
+    render(<SettingsDialog {...defaultProps} isWindows={true} autostartLoading={true} />)
+    expect(screen.getByRole('switch')).toBeDisabled()
+  })
+
+  it('reflects autostartEnabled=true on the switch', () => {
+    render(<SettingsDialog {...defaultProps} isWindows={true} autostartEnabled={true} />)
+    expect(screen.getByRole('switch')).toBeChecked()
+  })
+
+  it('calls onAutostartChange with correct value when switch is changed', () => {
+    render(<SettingsDialog {...defaultProps} isWindows={true} autostartEnabled={false} />)
+    fireEvent.click(screen.getByRole('switch'))
+    expect(onAutostartChange).toHaveBeenCalledWith(true)
+  })
+
+  it('shows current version when currentVersion is provided', () => {
+    render(<SettingsDialog {...defaultProps} currentVersion="1.0.0" />)
+    expect(screen.getByText('1.0.0')).toBeInTheDocument()
+  })
 })

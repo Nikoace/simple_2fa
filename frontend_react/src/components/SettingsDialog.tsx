@@ -16,17 +16,17 @@ import { useTranslation } from 'react-i18next'
 import { supportedLanguages, type SupportedLanguage } from '../i18n'
 
 interface SettingsDialogProps {
-  open: boolean
-  onClose: () => void
-  language: SupportedLanguage
-  onLanguageChange: (lang: SupportedLanguage) => void
-  isWindows: boolean
-  autostartEnabled: boolean
-  autostartLoading: boolean
-  onAutostartChange: (enabled: boolean) => void
-  onCheckUpdates: () => void
-  isCheckingUpdate: boolean
-  currentVersion: string
+  readonly open: boolean
+  readonly onClose: () => void
+  readonly language: SupportedLanguage
+  readonly onLanguageChange: (lang: SupportedLanguage) => void
+  readonly isWindows: boolean
+  readonly autostartEnabled: boolean
+  readonly autostartLoading: boolean
+  readonly onAutostartChange: (enabled: boolean) => void
+  readonly onCheckUpdates: () => void
+  readonly isCheckingUpdate: boolean
+  readonly currentVersion: string
 }
 
 /** Maps language code to display name shown in the language selector. */
