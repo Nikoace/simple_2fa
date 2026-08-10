@@ -20,7 +20,7 @@ serde = { version = "1.0", features = ["derive"] }
 log = "0.4"
 tauri = { version = "2.11.1", features = [] }
 tauri-plugin-log = "2"
-rusqlite = { version = "0.34", features = ["bundled"] }
+rusqlite = { version = "0.34", features = ["bundled-sqlcipher-vendored-openssl"] }
 totp-rs = { version = "5.7", default-features = false }
 thiserror = "2"
 base32 = "0.5"
@@ -31,6 +31,8 @@ tauri-plugin-dialog = "2"
 tauri-plugin-autostart = "2.5.1"
 tauri-plugin-updater = "2"
 tauri-plugin-process = "2"
+keyring = { version = "3.6.3", features = ["apple-native", "windows-native", "sync-secret-service"] }
+tauri-plugin-single-instance = "2.4.3"
 zeroize = "1.8.2"
 
 [profile.release]
