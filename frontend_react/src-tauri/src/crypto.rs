@@ -162,7 +162,7 @@ mod tests {
     fn test_decrypt_corrupted_data() {
         let accounts = sample_accounts();
         let mut encrypted = encrypt_accounts(&accounts, "password").expect("加密失败"); // lgtm[rust/hard-coded-cryptographic-value]
-        // 损坏密文部分
+                                                                                        // 损坏密文部分
         let last = encrypted.len() - 1;
         encrypted[last] ^= 0xFF;
 

@@ -41,6 +41,8 @@ pub enum DbError {
     // 使用 transparent 直接透传 TotpError，避免重复 "Invalid secret:" 前缀
     #[error(transparent)]
     InvalidSecret(#[from] TotpError),
+    #[error("数据库迁移失败: {0}")]
+    Migration(String),
 }
 
 const SCHEMA: &str = "CREATE TABLE IF NOT EXISTS account (
@@ -50,9 +52,67 @@ const SCHEMA: &str = "CREATE TABLE IF NOT EXISTS account (
     secret TEXT NOT NULL
 );";
 
-/// Initialize the database, creating the accounts table if it doesn't exist.
-pub fn init_db(db_path: &Path) -> Result<Connection, DbError> {
+/// 32 字节密钥编码为 SQLCipher 原始密钥所需的十六进制串
+fn key_to_hex(key: &[u8; 32]) -> String {
+    key.iter().map(|b| format!("{:02x}", b)).collect()
+}
+
+/// 打开数据库并用原始密钥解锁（不经 KDF，密钥已是 CSPRNG 随机字节）
+fn open_encrypted(db_path: &Path, key_hex: &str) -> Result<Connection, DbError> {
     let conn = Connection::open(db_path)?;
+    conn.execute_batch(&format!("PRAGMA key = \"x'{}'\";", key_hex))?;
+    Ok(conn)
+}
+
+/// 能否用当前密钥读取数据库（读 sqlite_master 会触发解密校验）
+fn is_readable(conn: &Connection) -> bool {
+    conn.query_row("SELECT count(*) FROM sqlite_master", [], |_| Ok(()))
+        .is_ok()
+}
+
+/// 将旧版明文数据库迁移为 SQLCipher 加密数据库（原地替换文件）
+fn migrate_plaintext_to_encrypted(db_path: &Path, key_hex: &str) -> Result<(), DbError> {
+    let plain = Connection::open(db_path)?;
+    // 确认确实是可读的明文 sqlite（若是错误密钥打开的加密库，这里会失败并中止，避免破坏数据）
+    plain.query_row("SELECT count(*) FROM sqlite_master", [], |_| Ok(()))?;
+
+    let tmp = db_path.with_extension("db.migrating");
+    let _ = std::fs::remove_file(&tmp); // 清理上次失败残留
+    let tmp_str = tmp
+        .to_str()
+        .ok_or_else(|| DbError::Migration("临时文件路径包含非法字符".to_string()))?
+        .replace('\'', "''"); // 转义单引号，防止路径破坏 SQL
+
+    // sqlcipher_export 把明文库整体导出到新的加密库
+    plain.execute_batch(&format!(
+        "ATTACH DATABASE '{tmp_str}' AS enc KEY \"x'{key_hex}'\"; \
+         SELECT sqlcipher_export('enc'); \
+         DETACH DATABASE enc;"
+    ))?;
+    drop(plain);
+
+    std::fs::rename(&tmp, db_path)
+        .map_err(|e| DbError::Migration(format!("替换数据库文件失败: {e}")))?;
+    Ok(())
+}
+
+/// 初始化加密数据库，必要时从旧版明文库迁移，并确保表存在。
+/// key 由 OS keyring 提供，用作 SQLCipher 原始密钥。
+pub fn init_db(db_path: &Path, key: &[u8; 32]) -> Result<Connection, DbError> {
+    let key_hex = key_to_hex(key);
+
+    // 已存在的文件：先尝试用密钥打开；打不开则视为旧版明文库并迁移
+    if db_path.exists() {
+        let conn = open_encrypted(db_path, &key_hex)?;
+        if is_readable(&conn) {
+            conn.execute_batch(SCHEMA)?;
+            return Ok(conn);
+        }
+        drop(conn);
+        migrate_plaintext_to_encrypted(db_path, &key_hex)?;
+    }
+
+    let conn = open_encrypted(db_path, &key_hex)?;
     conn.execute_batch(SCHEMA)?;
     Ok(conn)
 }
@@ -275,6 +335,86 @@ mod tests {
 
     fn setup_db() -> Connection {
         init_db_memory().unwrap()
+    }
+
+    // --- SQLCipher 加密 / 迁移测试 ---
+
+    #[test]
+    fn test_encrypted_db_unreadable_without_key() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("accounts.db");
+        let key = [7u8; 32];
+
+        {
+            let conn = init_db(&path, &key).unwrap();
+            create_account(&conn, "alice", Some("GitHub"), VALID_SECRET).unwrap();
+        }
+
+        // 用普通 sqlite（无 PRAGMA key）打开，读取应失败——证明文件在磁盘上是密文
+        let plain = Connection::open(&path).unwrap();
+        assert!(plain
+            .query_row("SELECT count(*) FROM account", [], |r| r.get::<_, i64>(0))
+            .is_err());
+
+        // 用正确密钥重新打开，数据完好
+        let conn = init_db(&path, &key).unwrap();
+        let n: i64 = conn
+            .query_row("SELECT count(*) FROM account", [], |r| r.get(0))
+            .unwrap();
+        assert_eq!(n, 1);
+    }
+
+    #[test]
+    fn test_wrong_key_fails_without_data_loss() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("accounts.db");
+
+        {
+            let conn = init_db(&path, &[1u8; 32]).unwrap();
+            create_account(&conn, "alice", None, VALID_SECRET).unwrap();
+        }
+
+        // 错误密钥：既读不出，也不能把加密库误判为明文而破坏它
+        assert!(init_db(&path, &[2u8; 32]).is_err());
+
+        // 正确密钥仍可读，数据未损坏
+        let conn = init_db(&path, &[1u8; 32]).unwrap();
+        let n: i64 = conn
+            .query_row("SELECT count(*) FROM account", [], |r| r.get(0))
+            .unwrap();
+        assert_eq!(n, 1);
+    }
+
+    #[test]
+    fn test_migrates_legacy_plaintext_db() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("accounts.db");
+
+        // 手工造一个旧版明文库
+        {
+            let conn = Connection::open(&path).unwrap();
+            conn.execute_batch(SCHEMA).unwrap();
+            conn.execute(
+                "INSERT INTO account (name, issuer, secret) VALUES ('legacy', NULL, ?1)",
+                params![VALID_SECRET],
+            )
+            .unwrap();
+        }
+
+        // init_db 应检测到明文并迁移为加密库，数据保留
+        let key = [9u8; 32];
+        let conn = init_db(&path, &key).unwrap();
+        let n: i64 = conn
+            .query_row("SELECT count(*) FROM account", [], |r| r.get(0))
+            .unwrap();
+        assert_eq!(n, 1);
+        drop(conn);
+
+        // 迁移后文件已加密：普通 sqlite 读不出
+        let plain = Connection::open(&path).unwrap();
+        assert!(plain
+            .query_row("SELECT count(*) FROM account", [], |r| r.get::<_, i64>(0))
+            .is_err());
     }
 
     #[test]
