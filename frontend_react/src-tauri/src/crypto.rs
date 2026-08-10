@@ -5,13 +5,25 @@ use aes_gcm::{
 use argon2::{Argon2, Params, Version};
 use rand::{rngs::OsRng, RngCore};
 use serde::{Deserialize, Serialize};
+use zeroize::Zeroizing;
 
 /// 导出用的账户结构（含密钥，绝不发送到前端）
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Clone, Serialize, Deserialize, PartialEq)]
 pub struct ExportAccount {
     pub name: String,
     pub issuer: Option<String>,
     pub secret: String,
+}
+
+// 手写 Debug：遮蔽 secret，防止密钥经 {:?} 泄漏到日志
+impl std::fmt::Debug for ExportAccount {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("ExportAccount")
+            .field("name", &self.name)
+            .field("issuer", &self.issuer)
+            .field("secret", &"<redacted>")
+            .finish()
+    }
 }
 
 /// 加密文件二进制格式:
@@ -36,7 +48,8 @@ pub enum CryptoError {
 }
 
 /// 使用 Argon2id 从密码和 salt 派生 256-bit 密钥
-fn derive_key(password: &str, salt: &[u8]) -> Result<[u8; 32], CryptoError> {
+/// 返回 Zeroizing 包装，drop 时自动清零内存中的密钥材料
+fn derive_key(password: &str, salt: &[u8]) -> Result<Zeroizing<[u8; 32]>, CryptoError> {
     let params = Params::new(
         65536, // m_cost: 64MB
         3,     // t_cost: 3 次迭代
@@ -46,9 +59,9 @@ fn derive_key(password: &str, salt: &[u8]) -> Result<[u8; 32], CryptoError> {
     .map_err(|_| CryptoError::KeyDerivationFailed)?;
 
     let argon2 = Argon2::new(argon2::Algorithm::Argon2id, Version::V0x13, params);
-    let mut key = [0u8; 32]; // lgtm[rust/hard-coded-cryptographic-value]
+    let mut key = Zeroizing::new([0u8; 32]); // lgtm[rust/hard-coded-cryptographic-value]
     argon2
-        .hash_password_into(password.as_bytes(), salt, &mut key)
+        .hash_password_into(password.as_bytes(), salt, &mut *key)
         .map_err(|_| CryptoError::KeyDerivationFailed)?;
     Ok(key)
 }
@@ -67,11 +80,11 @@ pub fn encrypt_accounts(
     // 派生密钥
     let key = derive_key(password, &salt)?;
 
-    // JSON 序列化
-    let plaintext = serde_json::to_vec(accounts)?;
+    // JSON 序列化（Zeroizing：drop 时清零含密钥的明文缓冲）
+    let plaintext = Zeroizing::new(serde_json::to_vec(accounts)?);
 
     // AES-256-GCM 加密
-    let cipher = Aes256Gcm::new_from_slice(&key)
+    let cipher = Aes256Gcm::new_from_slice(&*key)
         .map_err(|e| CryptoError::EncryptionFailed(e.to_string()))?;
     let nonce = Nonce::from_slice(&nonce_bytes);
     let ciphertext = cipher
@@ -107,12 +120,14 @@ pub fn decrypt_accounts(data: &[u8], password: &str) -> Result<Vec<ExportAccount
     // 派生密钥
     let key = derive_key(password, salt)?;
 
-    // AES-256-GCM 解密
-    let cipher = Aes256Gcm::new_from_slice(&key).map_err(|_| CryptoError::DecryptionFailed)?;
+    // AES-256-GCM 解密（Zeroizing：drop 时清零含密钥的明文缓冲）
+    let cipher = Aes256Gcm::new_from_slice(&*key).map_err(|_| CryptoError::DecryptionFailed)?;
     let nonce = Nonce::from_slice(nonce_bytes);
-    let plaintext = cipher
-        .decrypt(nonce, ciphertext)
-        .map_err(|_| CryptoError::DecryptionFailed)?;
+    let plaintext = Zeroizing::new(
+        cipher
+            .decrypt(nonce, ciphertext)
+            .map_err(|_| CryptoError::DecryptionFailed)?,
+    );
 
     // JSON 反序列化
     let accounts: Vec<ExportAccount> = serde_json::from_slice(&plaintext)?;
@@ -162,7 +177,7 @@ mod tests {
     fn test_decrypt_corrupted_data() {
         let accounts = sample_accounts();
         let mut encrypted = encrypt_accounts(&accounts, "password").expect("加密失败"); // lgtm[rust/hard-coded-cryptographic-value]
-        // 损坏密文部分
+                                                                                        // 损坏密文部分
         let last = encrypted.len() - 1;
         encrypted[last] ^= 0xFF;
 
