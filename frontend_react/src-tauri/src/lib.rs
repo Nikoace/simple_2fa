@@ -13,14 +13,19 @@ const KEYRING_SERVICE: &str = "com.nikoace.simple-2fa";
 const KEYRING_KEY_NAME: &str = "db-encryption-key";
 
 /// 从 OS keyring 取出数据库加密密钥；不存在则生成随机 32 字节并存入。
-/// 密钥以十六进制字符串形式存储（keyring 的 password 接口）。
+/// keyring 不可用时：debug 构建回退到固定 dev 密钥，release 构建直接失败。
 fn get_or_create_db_key() -> Result<[u8; 32], Box<dyn std::error::Error>> {
+    match keyring_db_key() {
+        Ok(key) => Ok(key),
+        Err(e) => dev_key_fallback(e),
+    }
+}
+
+/// 密钥以十六进制字符串形式存储（keyring 的 password 接口）。
+fn keyring_db_key() -> Result<[u8; 32], Box<dyn std::error::Error>> {
     let entry = keyring::Entry::new(KEYRING_SERVICE, KEYRING_KEY_NAME)?;
     match entry.get_password() {
-        Ok(hex) => {
-            let bytes = hex_decode_32(&hex).ok_or("keyring 中的密钥格式无效")?;
-            Ok(bytes)
-        }
+        Ok(hex) => hex_decode_32(&hex).ok_or_else(|| "keyring 中的密钥格式无效".into()),
         Err(keyring::Error::NoEntry) => {
             let mut key = [0u8; 32];
             OsRng.fill_bytes(&mut key);
@@ -30,6 +35,20 @@ fn get_or_create_db_key() -> Result<[u8; 32], Box<dyn std::error::Error>> {
         }
         Err(e) => Err(Box::new(e)),
     }
+}
+
+/// debug 构建：keyring 不可用（如 WSL 无 secret-service）时用固定 dev 密钥，
+/// 让 `tauri dev` 能跑起来。绝不用于 release。
+#[cfg(debug_assertions)]
+fn dev_key_fallback(e: Box<dyn std::error::Error>) -> Result<[u8; 32], Box<dyn std::error::Error>> {
+    log::warn!("keyring 不可用（{e}），回退到固定 dev 密钥——仅限 debug 构建，切勿用于生产");
+    Ok([0x2a; 32])
+}
+
+/// release 构建：keyring 是唯一密钥来源，不可用即失败，绝不弱化到固定密钥。
+#[cfg(not(debug_assertions))]
+fn dev_key_fallback(e: Box<dyn std::error::Error>) -> Result<[u8; 32], Box<dyn std::error::Error>> {
+    Err(e)
 }
 
 /// 将 64 字符十六进制串解析为 32 字节，失败返回 None
