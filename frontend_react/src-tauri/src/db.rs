@@ -6,12 +6,24 @@ use crate::crypto::ExportAccount;
 use crate::totp::{generate_totp_with_ttl, validate_secret, TotpError};
 
 /// Database-level account representation (includes secret).
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub struct Account {
     pub id: i64,
     pub name: String,
     pub issuer: Option<String>,
     pub secret: String,
+}
+
+// 手写 Debug：遮蔽 secret，防止密钥经 {:?} 泄漏到日志
+impl std::fmt::Debug for Account {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Account")
+            .field("id", &self.id)
+            .field("name", &self.name)
+            .field("issuer", &self.issuer)
+            .field("secret", &"<redacted>")
+            .finish()
+    }
 }
 
 /// Account returned to frontend (includes generated TOTP code, no secret).
