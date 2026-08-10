@@ -3849,7 +3849,7 @@ checksum = "e3a9fe34e3e7a50316060351f37187a3f546bce95496156754b601a5fa71b76e"
 
 [[package]]
 name = "simple-2fa"
-version = "0.6.0"
+version = "0.8.0"
 dependencies = [
  "aes-gcm",
  "argon2",
@@ -3869,6 +3869,7 @@ dependencies = [
  "tempfile",
  "thiserror 2.0.18",
  "totp-rs",
+ "zeroize",
 ]
 
 [[package]]
