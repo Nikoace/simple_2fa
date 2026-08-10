@@ -14,10 +14,12 @@ const KEYRING_KEY_NAME: &str = "db-encryption-key";
 
 /// 从 OS keyring 取出数据库加密密钥；不存在则生成随机 32 字节并存入。
 /// keyring 不可用时：debug 构建回退到固定 dev 密钥，release 构建直接失败。
-fn get_or_create_db_key() -> Result<[u8; 32], Box<dyn std::error::Error>> {
+/// 返回 (密钥, 是否走了 dev 回退)——回退时会改用独立的 dev 数据库文件，
+/// 避免 keyring 恢复后新密钥打不开旧 dev 库而 panic。
+fn get_or_create_db_key() -> Result<([u8; 32], bool), Box<dyn std::error::Error>> {
     match keyring_db_key() {
-        Ok(key) => Ok(key),
-        Err(e) => dev_key_fallback(e),
+        Ok(key) => Ok((key, false)),
+        Err(e) => dev_key_fallback(e).map(|k| (k, true)),
     }
 }
 
@@ -66,6 +68,14 @@ fn hex_decode_32(hex: &str) -> Option<[u8; 32]> {
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
+        // 必须最先注册：阻止第二个实例启动，避免全新安装时两个进程
+        // 并发生成不同密钥、互相覆盖 keyring 而导致数据库锁死。
+        // 第二次启动时把已有窗口聚焦到前台。
+        .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
+            if let Some(window) = app.get_webview_window("main") {
+                let _ = window.set_focus();
+            }
+        }))
         .setup(|app| {
             // Set up logging in debug mode
             if cfg!(debug_assertions) {
@@ -83,9 +93,15 @@ pub fn run() {
                 .expect("Failed to get app data directory");
             std::fs::create_dir_all(&app_data_dir).expect("Failed to create app data directory");
 
-            let db_path = app_data_dir.join("accounts.db");
-            let db_key =
+            let (db_key, used_fallback) =
                 get_or_create_db_key().expect("Failed to obtain DB encryption key from keyring");
+            // dev 回退库与生产 keyring 库分文件，互不干扰
+            let db_name = if used_fallback {
+                "accounts.dev.db"
+            } else {
+                "accounts.db"
+            };
+            let db_path = app_data_dir.join(db_name);
             let conn =
                 db::init_db(&db_path, &db_key).expect("Failed to initialize encrypted database");
 
