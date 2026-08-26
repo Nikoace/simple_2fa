@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.9.0](https://github.com/Nikoace/simple_2fa/compare/simple-2fa-v0.8.0...simple-2fa-v0.9.0) (2026-08-26)
+
+
+### Features
+
+* encrypt accounts DB at rest (SQLCipher + OS keyring) ([#29](https://github.com/Nikoace/simple_2fa/issues/29)) ([4b86705](https://github.com/Nikoace/simple_2fa/commit/4b8670503d1390fdde42f208eda84d225570bbce))
+* **frontend:** add ripple effect on successful code copy ([#31](https://github.com/Nikoace/simple_2fa/issues/31)) ([3225868](https://github.com/Nikoace/simple_2fa/commit/322586896a609c7e0bc67400a4aa4fee8e1d275c))
+
+
+### Bug Fixes
+
+* security hardening (deps update + zeroize + Debug redaction) ([#28](https://github.com/Nikoace/simple_2fa/issues/28)) ([e1a08aa](https://github.com/Nikoace/simple_2fa/commit/e1a08aac0cd888678ea1443ab60792959588244d))
+
 ## [0.8.0](https://github.com/Nikoace/simple_2fa/compare/simple-2fa-v0.7.1...simple-2fa-v0.8.0) (2026-06-04)
 
 
