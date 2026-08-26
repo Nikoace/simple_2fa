@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.9.1](https://github.com/Nikoace/simple_2fa/compare/simple-2fa-v0.9.0...simple-2fa-v0.9.1) (2026-08-26)
+
+
+### Bug Fixes
+
+* **frontend:** make copy ripple radiate across the whole card ([#32](https://github.com/Nikoace/simple_2fa/issues/32)) ([530cdbf](https://github.com/Nikoace/simple_2fa/commit/530cdbf18af392bc364611364a7b7b9799584d27))
+
 ## [0.9.0](https://github.com/Nikoace/simple_2fa/compare/simple-2fa-v0.8.0...simple-2fa-v0.9.0) (2026-08-26)
 
 
