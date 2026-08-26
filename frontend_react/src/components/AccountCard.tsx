@@ -15,6 +15,8 @@ export default function AccountCard({ account, onDelete, onEdit, onRefresh }: Ac
     const { t } = useTranslation();
     const { name, issuer, code, ttl } = account;
     const [timeLeft, setTimeLeft] = useState(ttl);
+    // 自增计数器：仅用作扩散圈的 key，值变化即重挂载元素，让 CSS 动画重新播放
+    const [pulse, setPulse] = useState(0);
     const refreshPendingRef = useRef(false);
 
     useEffect(() => {
@@ -43,7 +45,8 @@ export default function AccountCard({ account, onDelete, onEdit, onRefresh }: Ac
 
     const handleCopy = () => {
         const rawCode = code.replace(/ /g, '');
-        navigator.clipboard.writeText(rawCode);
+        // 特效表示「复制成功」，因此等写入 resolve 后再触发
+        navigator.clipboard.writeText(rawCode).then(() => setPulse((n) => n + 1));
     };
 
     return (
@@ -62,8 +65,27 @@ export default function AccountCard({ account, onDelete, onEdit, onRefresh }: Ac
                         <Typography variant="h4" color={isDanger ? 'error' : 'primary'} sx={{ fontFamily: '"JetBrains Mono", monospace', letterSpacing: 2, fontWeight: 'bold' }}>
                             {code}
                             <Tooltip title={t('accountCard.copyCode')}>
-                                <IconButton aria-label={t('accountCard.copyCode')} onClick={handleCopy} size="small" sx={{ ml: 1 }}>
+                                <IconButton aria-label={t('accountCard.copyCode')} onClick={handleCopy} size="small" sx={{ ml: 1, position: 'relative' }}>
                                     <ContentCopy fontSize="small" />
+                                    {pulse > 0 && (
+                                        <Box
+                                            key={pulse}
+                                            data-testid="copy-pulse"
+                                            sx={{
+                                                position: 'absolute',
+                                                inset: 0,
+                                                borderRadius: '50%',
+                                                border: '2px solid',
+                                                borderColor: 'success.main',
+                                                pointerEvents: 'none',
+                                                animation: 'copyPulse 600ms ease-out forwards',
+                                                '@keyframes copyPulse': {
+                                                    from: { transform: 'scale(1)', opacity: 0.8 },
+                                                    to: { transform: 'scale(2.6)', opacity: 0 },
+                                                },
+                                            }}
+                                        />
+                                    )}
                                 </IconButton>
                             </Tooltip>
                         </Typography>
