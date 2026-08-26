@@ -72,16 +72,23 @@ export default function AccountCard({ account, onDelete, onEdit, onRefresh }: Ac
                                             key={pulse}
                                             data-testid="copy-pulse"
                                             sx={{
+                                                // 以按钮中心为圆心。卡片宽度受 Container maxWidth="sm" 限制（<= 600px），
+                                                // 加上卡片高度后对角线仍 < 700px，故半径 700px 在任何窗口宽度下都能从
+                                                // 右上角的按钮盖到卡片左下角；溢出部分由 Card 的 overflow: hidden 裁成卡片形状
                                                 position: 'absolute',
-                                                inset: 0,
+                                                top: '50%',
+                                                left: '50%',
+                                                width: '1400px',
+                                                height: '1400px',
+                                                marginLeft: '-700px',
+                                                marginTop: '-700px',
                                                 borderRadius: '50%',
-                                                border: '2px solid',
-                                                borderColor: 'success.main',
+                                                bgcolor: 'success.main',
                                                 pointerEvents: 'none',
-                                                animation: 'copyPulse 600ms ease-out forwards',
+                                                animation: 'copyPulse 700ms ease-out forwards',
                                                 '@keyframes copyPulse': {
-                                                    from: { transform: 'scale(1)', opacity: 0.8 },
-                                                    to: { transform: 'scale(2.6)', opacity: 0 },
+                                                    from: { transform: 'scale(0)', opacity: 0.35 },
+                                                    to: { transform: 'scale(1)', opacity: 0 },
                                                 },
                                             }}
                                         />
