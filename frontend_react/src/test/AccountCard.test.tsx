@@ -1,5 +1,5 @@
 import { afterEach, describe, it, expect, vi } from 'vitest';
-import { act, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import AccountCard from '../components/AccountCard';
 
 // Mock clipboard API
@@ -67,6 +67,17 @@ describe('AccountCard', () => {
         );
         expect(screen.getByLabelText('Edit')).toBeInTheDocument();
         expect(screen.getByLabelText('Delete')).toBeInTheDocument();
+    });
+
+    it('should copy the code and play the ripple effect', async () => {
+        render(
+            <AccountCard account={mockAccount} onDelete={mockOnDelete} onEdit={mockOnEdit} onRefresh={mockOnRefresh} />
+        );
+
+        fireEvent.click(screen.getByLabelText('Copy Code'));
+
+        expect(navigator.clipboard.writeText).toHaveBeenCalledWith('123456');
+        await waitFor(() => expect(screen.getByTestId('copy-pulse')).toBeInTheDocument());
     });
 
     it('should keep progress at zero while waiting for refreshed ttl', () => {
