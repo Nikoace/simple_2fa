@@ -72,16 +72,22 @@ export default function AccountCard({ account, onDelete, onEdit, onRefresh }: Ac
                                             key={pulse}
                                             data-testid="copy-pulse"
                                             sx={{
+                                                // 以按钮中心为圆心；尺寸取 150vw 保证放大后必然盖满整张卡片，
+                                                // 溢出部分由 Card 的 overflow: hidden 裁成卡片形状
                                                 position: 'absolute',
-                                                inset: 0,
+                                                top: '50%',
+                                                left: '50%',
+                                                width: '150vw',
+                                                height: '150vw',
+                                                marginLeft: '-75vw',
+                                                marginTop: '-75vw',
                                                 borderRadius: '50%',
-                                                border: '2px solid',
-                                                borderColor: 'success.main',
+                                                bgcolor: 'success.main',
                                                 pointerEvents: 'none',
-                                                animation: 'copyPulse 600ms ease-out forwards',
+                                                animation: 'copyPulse 700ms ease-out forwards',
                                                 '@keyframes copyPulse': {
-                                                    from: { transform: 'scale(1)', opacity: 0.8 },
-                                                    to: { transform: 'scale(2.6)', opacity: 0 },
+                                                    from: { transform: 'scale(0)', opacity: 0.35 },
+                                                    to: { transform: 'scale(1)', opacity: 0 },
                                                 },
                                             }}
                                         />
